@@ -1,15 +1,37 @@
 package com.ethwal.server
 
+import com.ethwal.server.model.Wallet
+import com.ethwal.server.repository.WalletRepository
+
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
+import org.springframework.test.web.reactive.server.WebTestClient
+import reactor.core.publisher.Mono
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.MediaType
+
 
 @RunWith(SpringRunner::class)
-@SpringBootTest
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class ServerApplicationTests {
+    private val webTestClient = WebTestClient.bindToServer().build()
 
-	@Test
+    @Test
+    fun testGetAllWallet() {
+        webTestClient.get().uri("/walls")
+                .accept(MediaType.APPLICATION_JSON_UTF8)
+                .exchange()
+                .expectStatus().isOk
+                .expectHeader().contentType(MediaType.APPLICATION_JSON_UTF8)
+    }
+
+    @Test
+    fun testUpdateWallet() {
+        
+    }
+    @Test
 	fun contextLoads() {
 	}
 

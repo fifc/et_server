@@ -15,6 +15,9 @@ class Wallet {
     @Size(max = 60) @NotNull
     var userId: String = ""
 
+    @Size(max = 255) @NotNull
+    var description: String = ""
+
     @NotNull
     var createdAt = Date()
 
