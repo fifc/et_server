@@ -5,6 +5,6 @@ package com.ethwal.server.api
 class GetBalanceResponse {
     var account = ""
     var balance = ""
-    var result = ""
+    var status = ""
     var msg: String? = null // description message
 }
