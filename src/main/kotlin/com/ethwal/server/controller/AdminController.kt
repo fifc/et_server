@@ -17,6 +17,22 @@ class AdminController {
         return Mono.just("index")
     }
 
+    @GetMapping("/testkey")
+    @ResponseBody
+    fun getTestKey(model: Model): Map<String, String> {
+        val address = "0xbecac26346d9711e39bddc87acc699997ddc7ff8"
+        val acl = Config.authMap[address.substring(2)]
+        return if (acl == null)
+            mapOf(Pair("ERROR", ""))
+        else
+            mapOf(
+                    Pair("account", address),
+                    Pair("private key", acl.first),
+                    Pair("public key", address.substring(2)),
+                    Pair("note", "公钥/私钥为程序内部算法生成，并不是以太账户密钥")
+            )
+    }
+
     @RequestMapping(
             value = ["*"],
             method = [ RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE])
