@@ -16,7 +16,7 @@ data class CoinMarketPrice (
         val percent_change_24h: String? = null,
         val percent_change_7d: String? = null,
         val last_updated: String? = null,
-        val price_eur: String? = null,
-        val h24_volume_eur: String? = null,
-        val market_cap_eur: String? = null
+        val price_cny: String? = null,
+        val h24_volume_cny: String? = null,
+        val market_cap_cny: String? = null
 )

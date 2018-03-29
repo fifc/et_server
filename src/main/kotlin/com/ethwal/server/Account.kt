@@ -1,13 +1,17 @@
 package com.ethwal.server
 
+import org.apache.commons.logging.LogFactory
+import org.bouncycastle.asn1.x500.style.RFC4519Style.name
 import java.security.NoSuchProviderException
 import java.security.NoSuchAlgorithmException
 import java.security.InvalidAlgorithmParameterException
 import java.io.IOException
 import org.web3j.crypto.CipherException
+import org.web3j.crypto.Credentials
 import org.web3j.crypto.WalletUtils
 
 import java.io.File
+import java.io.FilenameFilter
 
 /*
 {
@@ -21,6 +25,7 @@ import java.io.File
 */
 class Account  {
     companion object {
+        private val LOG = LogFactory.getLog(Account::class.java)
 
         private fun getDestinationDir(): String {
             return Config.keystoreDir
@@ -43,30 +48,63 @@ class Account  {
             return destination
         }
 
+        // 离线模式
         fun new(password: String): String? {
             val destinationDir = getDestinationDir()
             val destination = createDir(destinationDir)
 
+            var address: String? = null
+
             try {
+                val seperator = System.getProperty("file.separator")
                 var walletFileName = if (isFullNode())
                     WalletUtils.generateFullNewWalletFile(password, destination)
                 else
                     WalletUtils.generateLightNewWalletFile(password, destination)
+
                 println("Wallet file $walletFileName successfully created in: $destinationDir")
-                val credentials = WalletUtils.loadCredentials(password, "$destinationDir/$walletFileName")
-                return credentials.address
+
+                val credentials = WalletUtils.loadCredentials(password, "$destinationDir$seperator$walletFileName")
+                address = credentials.address
             } catch (e: CipherException) {
-                println(e)
+                LOG.error(e)
             } catch (e: IOException) {
-                println(e)
+                LOG.error(e)
             } catch (e: InvalidAlgorithmParameterException) {
-                println(e)
+                LOG.error(e)
             } catch (e: NoSuchAlgorithmException) {
-                println(e)
+                LOG.error(e)
             } catch (e: NoSuchProviderException) {
-                println(e)
+                LOG.error(e)
             }
-            return null
+
+            return address
+        }
+
+        // RPC模式
+        fun create(password: String): String? {
+            return try {
+                val account = EtherBroker.admin.personalNewAccount(password).send()
+                account.accountId
+            } catch (e: Exception) {
+                LOG.error(e)
+                null
+            }
+        }
+
+        fun loadCredentials(account: String, password: String): Credentials? {
+            val dir = File(Config.keystoreDir)
+            val pattern = account.substring(2)
+            val list = dir.listFiles({ dir, name->
+                name.contains(pattern, true)
+            })
+
+            return if (list == null || list.isEmpty())
+                null
+            else {
+                var cre = WalletUtils.loadCredentials(password, list[0])
+                cre
+            }
         }
     }
 }

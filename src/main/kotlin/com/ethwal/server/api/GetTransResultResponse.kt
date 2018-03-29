@@ -1,7 +1,8 @@
 package com.ethwal.server.api
 
-class SendTransResponse {
-    var account = ""
+class GetTransResultResponse {
+    var completed = false  // true 表示block已经生成并交由矿工处理
+    var from = ""
     var to = ""
     var value = ""
     var gas = ""

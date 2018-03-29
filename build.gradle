@@ -24,7 +24,7 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 group = 'com.ethwal'
-version = '1.0.2-RELEASE'
+version = '1.0.0-RELEASE'
 sourceCompatibility = 1.9
 
 compileKotlin {
@@ -54,13 +54,14 @@ dependencies {
 	compile('com.fasterxml.jackson.module:jackson-module-kotlin')
 	compile("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 	compile("org.jetbrains.kotlin:kotlin-reflect")
-	compile ('org.web3j:core:+')
+	compile('org.web3j:core:+')
+	compile('com.google.guava:guava:+')
 	testCompile('org.springframework.boot:spring-boot-starter-test')
 	testCompile('io.projectreactor:reactor-test')
 }
 
 defaultTasks 'run'
-mainClassName = 'com/ethwal/server/ServerApplicationKt'
+mainClassName = 'com.ethwal.server.ServerApplicationKt'
 
 task wrapper(type: Wrapper) {
   gradleVersion = "4.6"

@@ -9,19 +9,17 @@ import org.web3j.protocol.ipc.WindowsIpcService
 
 
 object EtherBroker {
-    var broker =  if (Config.isUsingHttp)
-        Web3j.build(HttpService(Config.web3jUrl))
-    else if (Config.isWindowsPlatform)
-        Web3j.build(WindowsIpcService(Config.web3jUrl))
-    else
-        Web3j.build( UnixIpcService(Config.web3jUrl))
+    var broker = when {
+        Config.web3jUrl.startsWith("http") -> Web3j.build(HttpService(Config.web3jUrl))
+        System.getProperty("os.name").startsWith("Windows") -> Web3j.build(WindowsIpcService(Config.web3jUrl))
+        else -> Web3j.build( UnixIpcService(Config.web3jUrl))
+    }
 
-    var admin =  if (Config.isUsingHttp)
-        Admin.build(HttpService(Config.web3jUrl))
-    else if (Config.isWindowsPlatform)
-        Admin.build(WindowsIpcService(Config.web3jUrl))
-    else
-        Admin.build( UnixIpcService(Config.web3jUrl))
+    var admin = when {
+        Config.web3jUrl.startsWith("http")-> Admin.build(HttpService(Config.web3jUrl))
+        System.getProperty("os.name").startsWith("Windows") -> Admin.build(WindowsIpcService(Config.web3jUrl))
+        else -> Admin.build( UnixIpcService(Config.web3jUrl))
+    }
 
     fun getBalance(address: String): String {
         return try {
