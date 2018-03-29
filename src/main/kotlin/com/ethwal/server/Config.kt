@@ -12,7 +12,7 @@ object Config {
     const val keystoreDir = "/opt/keystore"
 
     // ipc/rpc 配置
-    const val web3jUrl = "/root/chain/rinkeby/geth.ipc"
+    const val web3jUrl = "/home/etherum/rinkeby/geth.ipc"
     //const val web3jUrl = "\\\\.\\pipe\\geth.ipc"
     //const val web3jUrl = "http://eth.gboot.cc:8000"
 
