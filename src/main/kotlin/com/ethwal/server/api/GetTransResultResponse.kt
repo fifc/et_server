@@ -1,7 +1,7 @@
 package com.ethwal.server.api
 
 class GetTransResultResponse {
-    var completed = false  // true 表示block已经生成并交由矿工处理
+    var confirmed = false  // true 表示交易已得到确认
     var from = ""
     var to = ""
     var value = ""

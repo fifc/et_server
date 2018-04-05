@@ -10,6 +10,7 @@ import com.ethwal.server.repository.WalletRepository
 import com.google.common.hash.Hashing
 //import jdk.incubator.http.HttpClient
 import org.apache.commons.logging.LogFactory
+import org.reactivestreams.Publisher
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.Example
 import org.springframework.http.HttpStatus
@@ -33,6 +34,7 @@ import org.web3j.protocol.core.methods.response.TransactionReceipt
 import org.web3j.tx.Transfer
 import org.web3j.utils.Convert
 import reactor.core.publisher.toMono
+import reactor.core.scheduler.Schedulers
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.nio.charset.StandardCharsets
@@ -202,7 +204,9 @@ class WalletController {
             } else {
                 val trans = ret.transaction.get()
                 LOG.info(">>>>>>>>>>>>>>>>>>  block: ${trans.blockHash} value = ${trans.value} gas = ${trans.gas} gasPrice = ${trans.gasPrice}")
-                response.gas =  trans.gas.multiply(trans.gasPrice).divide(BigInteger("1000000000000000000")).toString()
+                var gas = trans.gas.multiply(trans.gasPrice).toBigDecimal()
+                response.gas = Convert.fromWei(gas, Convert.Unit.ETHER).toString()
+                response.value = Convert.fromWei(trans.value.toBigDecimal(), Convert.Unit.ETHER).toString()
             }
         }
     }
@@ -255,33 +259,47 @@ class WalletController {
     }
 
     // 查询交易结果
-    @GetMapping("/trans_result/{hash}")
+    @GetMapping("/result/{hash}")
     fun getTransResult(@PathVariable(value = "hash") hash: String,
                       @RequestParam("key") key: String?): Mono<ResponseEntity<GetTransResultResponse>> {
         if (key == null || !Config.canQuery(key)) {
             // privilege checking disabled for now
         }
-        return EtherBroker.broker.ethGetTransactionByHash(hash).sendAsync().toMono().map {
+        return EtherBroker.broker.ethGetTransactionByHash(hash).sendAsync().toMono().flatMap {
             var response = GetTransResultResponse()
+
             when {
                 it.hasError() -> {
                     response.status = "ERROR"
                     response.msg = it.error.message
+                    Mono.just(ResponseEntity(response, HttpStatus.OK))
                 }
                 else -> if (!it.transaction.isPresent) {
                     response.status = "NOT_FOUND"
                     response.msg = "transaction not found"
+                    Mono.just(ResponseEntity(response, HttpStatus.OK))
                 } else {
                     response.status = "OK"
                     val trans = it.transaction.get()
                     response.hash = trans.hash
                     response.from = trans.from
                     response.to = trans.to
-                    response.value = trans.value.toString()
-                    response.gas = trans.gas.multiply((trans.gasPrice)).divide(BigInteger("1000000000000000000")).toString()
+                    response.value = Convert.fromWei(trans.value.toBigDecimal(), Convert.Unit.ETHER).toString()
+                    var gas = trans.gas.multiply(trans.gasPrice).toBigDecimal()
+                    response.gas = Convert.fromWei(gas, Convert.Unit.ETHER).toString()
+                    EtherBroker.broker.ethBlockNumber().sendAsync().toMono().map {
+                        if (it.hasError()) {
+                            response.status = "ERROR"
+                            response.msg = "failure get latest block number"
+                        } else {
+                            val confirm = it.blockNumber.subtract(trans.blockNumber).toLong()
+                            response.confirmed = confirm >= 5
+                            response.msg = "confirmation count = $confirm"
+                        }
+                        ResponseEntity(response, HttpStatus.OK)
+                    }
                 }
             }
-            ResponseEntity(response, HttpStatus.OK)
         }
     }
 
@@ -351,7 +369,8 @@ class WalletController {
             response.status = "OK"
             return Mono.just(ResponseEntity(response, HttpStatus.OK))
         }
-        // 缓存过期，从第三方服务拉取行情
+
+        // 缓存过期，从cainmarketcap.com拉取行情
         var webClient = WebClient.create()
         return webClient.get().uri("https://api.coinmarketcap.com/v1/ticker/ethereum/?convert=CNY")
                 .accept(MediaType.APPLICATION_JSON_UTF8)

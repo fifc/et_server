@@ -1,20 +1,22 @@
 package com.ethwal.server
 
 import com.ethwal.server.api.GetMarketPriceResponse
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.context.annotation.Configuration
 import org.springframework.stereotype.Component
 
 @Component
 object Config {
     // 是否全节点模式
     const val isFullNode = true
-    // keystore目录,建议绝对路径
-    // const val keystoreDir = "C:\\u\\keystore"
-    const val keystoreDir = "/opt/keystore"
+    //keystore目录,建议绝对路径
+    const val keystoreDir = "C:\\u\\keystore"
+    //const val keystoreDir = "/opt/keystore"
 
     // ipc/rpc 配置
-    const val web3jUrl = "/home/etherum/rinkeby/geth.ipc"
+    //const val web3jUrl = "/home/etherum/rinkeby/geth.ipc"
     //const val web3jUrl = "\\\\.\\pipe\\geth.ipc"
-    //const val web3jUrl = "http://eth.gboot.cc:8000"
+    const val web3jUrl = "http://eth.gboot.cc:8000"
 
     // 鉴权配置
     const val enableHmac = false
