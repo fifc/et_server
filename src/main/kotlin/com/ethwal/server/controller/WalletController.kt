@@ -326,10 +326,8 @@ class WalletController {
             return Mono.just(ResponseEntity(response, HttpStatus.BAD_REQUEST))
         }
 
+        val uriBase = Config.uriBase
         var webClient = WebClient.create()
-        //val uriBase = "https://api-ropsten.etherscan.io/api?module=account&action=balance"
-        val uriBase = "https://api-rinkeby.etherscan.io/api?module=account&action=balance"
-        //val uriBase = "https://api.etherscan.io/api?module=account&action=balance"
         return webClient.get().uri("$uriBase&address=$account&tag=latest&apikey=${Config.etherscanKey}")
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
@@ -361,11 +359,13 @@ class WalletController {
             // ignore privilege checking for now
         }
 
-        if (timestamp < Config.marketPrice.time + Config.priceUpdatePeriod) { // 10分钟内读取本地缓存
+        val latest = GetMarketPriceResponse.latest
+        if (timestamp < latest.time + Config.priceUpdatePeriod) { // 10分钟内读取本地缓存
             var response = GetMarketPriceResponse()
-            response.usd = Config.marketPrice.usd
-            response.btc = Config.marketPrice.btc
-            response.time = Config.marketPrice.time
+            response.usd = latest.usd
+            response.btc = latest.btc
+            response.time = latest.time
+            response.gasPrice = latest.gasPrice
             response.status = "OK"
             return Mono.just(ResponseEntity(response, HttpStatus.OK))
         }
@@ -384,14 +384,16 @@ class WalletController {
                                     ResponseEntity(response, HttpStatus.NOT_FOUND)
                                 } else {
                                     var price = it[0]
-                                    Config.marketPrice.time = timestamp
-                                    Config.marketPrice.btc = price.price_btc?:""
-                                    Config.marketPrice.usd = price.price_usd?:""
-                                    response.usd = Config.marketPrice.usd
-                                    response.btc = Config.marketPrice.btc
-                                    response.time = Config.marketPrice.time
+                                    latest.time = timestamp
+                                    latest.btc = price.price_btc?:""
+                                    latest.usd = price.price_usd?:""
+                                    response.usd = latest.usd
+                                    response.btc = latest.btc
+                                    response.time = latest.time
                                     var gasPrice = EtherBroker.broker.ethGasPrice().send()
-                                    response.gasPrice = if (gasPrice.hasError()) "" else gasPrice.gasPrice.toString()
+                                    response.gasPrice = if (gasPrice.hasError()) "1000000000" else gasPrice.gasPrice.toString()
+                                    if (!response.gasPrice.isNullOrBlank())
+                                        latest.gasPrice = response.gasPrice
                                     response.status = "OK"
                                     ResponseEntity(response, HttpStatus.OK)
                                 }

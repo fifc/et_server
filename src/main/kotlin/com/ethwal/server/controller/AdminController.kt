@@ -1,13 +1,16 @@
 package com.ethwal.server.controller
 
 import com.ethwal.server.Config
+import org.springframework.core.io.FileSystemResource
+import org.springframework.http.CacheControl
+import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestMethod
-import org.springframework.web.bind.annotation.ResponseBody
+import org.springframework.web.bind.annotation.*
 import reactor.core.publisher.Mono
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 @Controller
 @RequestMapping("/")
@@ -26,11 +29,39 @@ class AdminController {
             mapOf(Pair("ERROR", ""))
         else
             mapOf(
+                    Pair("network", Config.network),
                     Pair("account", address),
                     Pair("private key", acl.first),
                     Pair("public key", address.substring(2)),
-                    Pair("note", "公钥/私钥为程序内部算法生成，并不是以太账户密钥")
+                    Pair("os", System.getProperty("os.name")),
+                    Pair("cwd", System.getProperty("user.dir")),
+                    Pair("node", Config.web3jUrl),
+                    Pair("keystore", "internal"/*Config.keystoreDir*/),
+                    Pair("clock", LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME))
             )
+    }
+
+    @GetMapping("/doc/{name}", produces = ["application/octet-stream"])
+    fun streamToZip(@PathVariable("name") name: String?): Mono<ResponseEntity<FileSystemResource>> {
+        if (name == null || name.isBlank()) {
+            return Mono.just(ResponseEntity(HttpStatus.NOT_FOUND))
+        }
+
+        val sep = System.getProperty("file.separator")
+        val file = FileSystemResource("doc$sep$name")
+
+        return when {
+            !file.exists() || !file.isFile -> {
+                println("file ${file.path} not exists!")
+                Mono.just(ResponseEntity(HttpStatus.NOT_FOUND))
+            }
+            !file.isReadable -> Mono.just(ResponseEntity(HttpStatus.FORBIDDEN))
+            else -> Mono.just(ResponseEntity
+                    .ok().cacheControl(CacheControl.noCache())
+                    .header("Content-Type", "application/octet-stream")
+                    .header("Content-Disposition", "attachment; filename=$name")
+                    .body(file))
+        }
     }
 
     @RequestMapping(

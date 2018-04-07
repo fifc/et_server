@@ -7,6 +7,8 @@ import org.springframework.stereotype.Component
 
 @Component
 object Config {
+    // network
+    const val network = "rinkeby"
     // 是否全节点模式
     const val isFullNode = true
     //keystore目录,建议绝对路径
@@ -17,6 +19,14 @@ object Config {
     //const val web3jUrl = "/home/etherum/rinkeby/geth.ipc"
     //const val web3jUrl = "\\\\.\\pipe\\geth.ipc"
     const val web3jUrl = "http://eth.gboot.cc:8000"
+
+    // url of balance query api
+    val uriBase = when (network) {
+        "kovan" -> "https://api-kovan.etherscan.io/api?module=account&action=balance"
+        "rinkeby" -> "https://api-rinkeby.etherscan.io/api?module=account&action=balance"
+        "ropsten" -> "https://api-ropsten.etherscan.io/api?module=account&action=balance"
+        else -> "https://api.etherscan.io/api?module=account&action=balance"
+    }
 
     // 鉴权配置
     const val enableHmac = false
@@ -55,5 +65,4 @@ object Config {
 
     const val priceUpdatePeriod = 15 // 行情刷新时间，秒
 
-    var marketPrice = GetMarketPriceResponse()
 }
