@@ -66,26 +66,27 @@ class WalletController {
             response.status = "INVALID_USERID"
             return Mono.just(response)
         }
+
         if (request.key == null || !Config.canOpenAccount(request.key!!)) {
              // ignore privilege checking for now
         }
 
-        val account = Account.new(request.password)
-        if (account == null) {
-            response.status = "CREATE_ACCOUNT_ERROR"
-        }
-        else {
+        return Account.newAsync(request.password).map {
             response.status = "OK"
-            response.account = account
+            response.account = it
             if (walletRepository != null) {
-                var wallet = Wallet(account)
+                var wallet = Wallet(response.account)
                 wallet.userId = request.userId
                 walletRepository.save(Wallet(response.account))
             }
+            LOG.info(response)
+            response
+        }.onErrorResume {
+            response.status = "CREATE_ACCOUNT_ERROR"
+            response.msg = it.message.toString()
+            //Mono.error(it)
+            Mono.just(response)
         }
-
-        LOG.info(response)
-        return Mono.just(response)
     }
 
     // 权限校验，设置默认返回值
@@ -259,7 +260,7 @@ class WalletController {
                 .defaultIfEmpty (response)
     }
 
-    // 查询交易结果
+    // 查询交易确认信息
     @GetMapping("/result/{hash}")
     fun getTransResult(@PathVariable(value = "hash") hash: String,
                       @RequestParam("key") key: String?): Mono<ResponseEntity<GetTransResultResponse>> {
@@ -304,23 +305,25 @@ class WalletController {
         }
     }
 
-    // 查询账户余额 （从本地节点查询)
-    @GetMapping("/local_balance/{account}")
-    fun getLocalBalance(@PathVariable(value = "account") account: String): Mono<ResponseEntity<GetBalanceResponse>> {
+    // 查询账户余额 （从节点查询)
+    @GetMapping("/balance/{account}")
+    fun getBalance(@PathVariable(value = "account") account: String): Mono<ResponseEntity<GetBalanceResponse>> {
         var response = GetBalanceResponse()
         if (account.isBlank()) {
             response.status = "INVALID_ACCOUNT"
             return Mono.just(ResponseEntity(response, HttpStatus.BAD_REQUEST))
         }
         response.account = account
-        response.balance = EtherBroker.getBalance(account)
-        response.status = if (response.balance.isBlank()) "FAIL" else "OK"
-        return Mono.just(ResponseEntity(response, HttpStatus.OK))
+        return EtherBroker.getBalance(account).map {
+            response.balance = it
+            response.status = if (it.isBlank()) "FAIL" else "OK"
+            ResponseEntity(response, HttpStatus.OK)
+        }
     }
 
-    // 查询账户余额 （etherscan api)
-    @GetMapping("/balance/{account}")
-    fun getBalance(@PathVariable(value = "account") account: String): Mono<ResponseEntity<GetBalanceResponse>> {
+    // 查询账户余额 （via EtherScan API)
+    @GetMapping("/es_balance/{account}")
+    fun getEsBalance(@PathVariable(value = "account") account: String): Mono<ResponseEntity<GetBalanceResponse>> {
         if (account.isBlank()) {
             var response = GetBalanceResponse()
             response.status = "INVALID_ACCOUNT"
@@ -406,13 +409,18 @@ class WalletController {
     // 返回区块链同步状态
     @GetMapping("/sync")
     fun getSyncStatus(@RequestParam("sign") sign: String?): Mono<ResponseEntity<EthSyncing.Result>> {
-        val admin = EtherBroker.admin
         LOG.info("signature = <$sign>")
+        val admin = EtherBroker.admin
+        if (admin == null) {
+            var response = EthSyncing.Result()
+            response.isSyncing = false
+            ResponseEntity(response, HttpStatus.OK)
+        }
 
         return if (sign.equals("test"))
             Mono.just(ResponseEntity(HttpStatus.OK))
         else
-            admin.ethSyncing().sendAsync().toMono()
+            admin!!.ethSyncing().sendAsync().toMono()
                     .map {
                         ResponseEntity(it.result, HttpStatus.OK)
                     }
@@ -499,9 +507,9 @@ class WalletController {
     // 数据库相关的操作，非必需
     @GetMapping( value = ["/stream/wall"],  produces = [MediaType.TEXT_EVENT_STREAM_VALUE])
     fun streamAllWallets(): Flux<Wallet> {
-        return walletRepository!!.findAll().map({wallet ->
+        return walletRepository!!.findAll().map {wallet ->
             wallet.description += " - stream"
             wallet
-        })
+        }
     }
 }

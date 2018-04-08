@@ -7,9 +7,7 @@ import com.ethwal.server.model.Wallet
 import com.ethwal.server.repository.TransRepository
 import com.ethwal.server.repository.WalletRepository
 import com.google.common.hash.Hashing
-//import jdk.incubator.http.HttpClient
 import org.apache.commons.logging.LogFactory
-import org.reactivestreams.Publisher
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.Example
 import org.springframework.http.HttpStatus
@@ -25,7 +23,6 @@ import org.springframework.web.reactive.function.client.WebClient
 import org.web3j.protocol.Web3j
 import org.web3j.protocol.core.DefaultBlockParameter
 import org.web3j.protocol.core.methods.response.EthBlock
-import org.web3j.protocol.core.methods.response.EthSyncing
 import org.web3j.protocol.core.methods.response.EthTransaction
 import org.web3j.protocol.core.methods.response.TransactionReceipt
 import org.web3j.protocol.infura.InfuraHttpService
@@ -38,6 +35,7 @@ import java.nio.charset.StandardCharsets
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 
+// JsonRPC接口，用于web3j封装不满足需求的情况。暂未启用
 @RestController
 @RequestMapping("/infura")
 class InfuraController {
@@ -256,26 +254,29 @@ class InfuraController {
     }
 
     // 查询账户余额 （从本地节点查询)
-    @GetMapping("/local_balance/{account}")
-    fun getLocalBalance(@PathVariable(value = "account") account: String): Mono<ResponseEntity<GetBalanceResponse>> {
+    @GetMapping("/balance/{account}")
+    fun getBalance(@PathVariable(value = "account") account: String): Mono<ResponseEntity<GetBalanceResponse>> {
         var response = GetBalanceResponse()
         if (account.isBlank()) {
             response.status = "INVALID_ACCOUNT"
             return Mono.just(ResponseEntity(response, HttpStatus.BAD_REQUEST))
         }
         response.account = account
-        response.balance = getEtherBalance(account)
-        response.status = if (response.balance.isBlank()) "FAIL" else "OK"
-        return Mono.just(ResponseEntity(response, HttpStatus.OK))
+        return getEtherBalance(account).map {
+            response.balance = it
+            response.status = if (it.isBlank()) "FAIL" else "OK"
+            ResponseEntity(response, HttpStatus.OK)
+        }
     }
 
-    private fun getEtherBalance(account: String): String {
-        return "0"
+    private fun getEtherBalance(account: String): Mono<String> {
+        LOG.info("account $account")
+        return Mono.just("0")
     }
 
-    // 查询账户余额 （etherscan api)
-    @GetMapping("/balance/{account}")
-    fun getBalance(@PathVariable(value = "account") account: String): Mono<ResponseEntity<GetBalanceResponse>> {
+    // 查询账户余额 （via EtherScan API)
+    @GetMapping("/es_balance/{account}")
+    fun getEsBalance(@PathVariable(value = "account") account: String): Mono<ResponseEntity<GetBalanceResponse>> {
         if (account.isBlank()) {
             var response = GetBalanceResponse()
             response.status = "INVALID_ACCOUNT"

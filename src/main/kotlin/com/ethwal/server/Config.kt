@@ -10,19 +10,23 @@ object Config {
     // 是否全节点模式
     const val isFullNode = true
     //keystore目录,建议绝对路径
-    const val keystoreDir = "C:\\u\\keystore"
-    //const val keystoreDir = "/opt/keystore"
+    val keystoreDir = if (System.getProperty("os.name").startsWith("Windows", true))
+        "C:\\u\\keystore"
+    else
+        "/opt/keystore"
 
     // ipc/rpc 配置
     const val useInfura = true
     const val infuraKey = "ZlzjMlCBK4e96fJhZ3Vb"
     const val etherscanKey = "BMI7CIXTWWYI99F9QVV41EMH85W9R9VYUR"
-    val web3jUrl = if (useInfura)
-        "https://$network.infura.io/$infuraKey"
-    else
-        //"/home/etherum/rinkeby/geth.ipc"
-        //"\\\\.\\pipe\\geth.ipc"
-        "http://eth.gboot.cc:8000"
+
+    val web3jUrl = when {
+        useInfura -> "https://$network.infura.io/$infuraKey"
+        System.getProperty("os.name").startsWith("Windows", true)
+            //"\\\\.\\pipe\\geth.ipc"
+        -> "http://eth.gboot.cc:8000"
+        else -> "/home/etherum/rinkeby/geth.ipc"
+    }
 
     // url of balance query api
     val uriBase = when (network) {

@@ -8,6 +8,7 @@ import java.io.IOException
 import org.web3j.crypto.CipherException
 import org.web3j.crypto.Credentials
 import org.web3j.crypto.WalletUtils
+import reactor.core.publisher.Mono
 
 import java.io.File
 
@@ -79,9 +80,53 @@ class Account  {
             return address
         }
 
+        // 离线模式, 异步模式
+        fun newAsync(password: String): Mono<String> {
+            return Mono.defer {
+                val destinationDir = getDestinationDir()
+                val destination = createDir(destinationDir)
+
+                var address = ""
+                var err: Throwable? = null
+
+                try {
+                    val seperator = System.getProperty("file.separator")
+                    var walletFileName = if (isFullNode())
+                        WalletUtils.generateFullNewWalletFile(password, destination)
+                    else
+                        WalletUtils.generateLightNewWalletFile(password, destination)
+
+                    println("Wallet file $walletFileName successfully created in: $destinationDir")
+
+                    val credentials = WalletUtils.loadCredentials(password, "$destinationDir$seperator$walletFileName")
+                    address = credentials.address
+                } catch (e: CipherException) {
+                    err = e
+                    LOG.error(e)
+                } catch (e: IOException) {
+                    err = e
+                    LOG.error(e)
+                } catch (e: InvalidAlgorithmParameterException) {
+                    err = e
+                } catch (e: NoSuchAlgorithmException) {
+                    err = e
+                } catch (e: NoSuchProviderException) {
+                    err = e
+                } catch (e: Throwable) {
+                    err = e
+                }
+
+                if (err != null) {
+                    LOG.error(err)
+                    Mono.error(err)
+                } else
+                    Mono.just(address)
+            }
+        }
+
         // RPC模式
         fun create(password: String): String? {
-            val admin = EtherBroker.admin
+            val admin = EtherBroker.admin ?: return null
             return try {
                 val account = admin.personalNewAccount(password).send()
                 account.accountId
