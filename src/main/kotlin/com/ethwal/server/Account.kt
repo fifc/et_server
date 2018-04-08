@@ -1,7 +1,6 @@
 package com.ethwal.server
 
 import org.apache.commons.logging.LogFactory
-import org.bouncycastle.asn1.x500.style.RFC4519Style.name
 import java.security.NoSuchProviderException
 import java.security.NoSuchAlgorithmException
 import java.security.InvalidAlgorithmParameterException
@@ -11,7 +10,6 @@ import org.web3j.crypto.Credentials
 import org.web3j.crypto.WalletUtils
 
 import java.io.File
-import java.io.FilenameFilter
 
 /*
 {
@@ -83,8 +81,9 @@ class Account  {
 
         // RPC模式
         fun create(password: String): String? {
+            val admin = EtherBroker.admin
             return try {
-                val account = EtherBroker.admin.personalNewAccount(password).send()
+                val account = admin.personalNewAccount(password).send()
                 account.accountId
             } catch (e: Exception) {
                 LOG.error(e)

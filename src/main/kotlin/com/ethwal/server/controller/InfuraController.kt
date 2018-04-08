@@ -3,7 +3,6 @@ package com.ethwal.server.controller
 import  com.ethwal.server.api.*
 import com.ethwal.server.Account
 import com.ethwal.server.Config
-import com.ethwal.server.EtherBroker
 import com.ethwal.server.model.Wallet
 import com.ethwal.server.repository.TransRepository
 import com.ethwal.server.repository.WalletRepository
@@ -24,33 +23,32 @@ import javax.validation.Valid
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.reactive.function.client.WebClient
 import org.web3j.protocol.Web3j
-//import org.web3j.crypto.WalletUtils
-//import org.web3j.protocol.admin.methods.response.PersonalListAccounts
 import org.web3j.protocol.core.DefaultBlockParameter
 import org.web3j.protocol.core.methods.response.EthBlock
 import org.web3j.protocol.core.methods.response.EthSyncing
 import org.web3j.protocol.core.methods.response.EthTransaction
 import org.web3j.protocol.core.methods.response.TransactionReceipt
+import org.web3j.protocol.infura.InfuraHttpService
 import org.web3j.tx.Transfer
 import org.web3j.utils.Convert
 import reactor.core.publisher.toMono
-import reactor.core.scheduler.Schedulers
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.nio.charset.StandardCharsets
 import java.time.LocalDateTime
 import java.time.ZoneOffset
-//import java.util.function.Predicate
 
 @RestController
-//@RequestMapping("/0")
-class WalletController {
+@RequestMapping("/infura")
+class InfuraController {
+    var broker = Web3j.build(InfuraHttpService(Config.web3jUrl))
+
     @Autowired
     private val walletRepository: WalletRepository? = null
     @Autowired
     private val transRepository: TransRepository? = null
 
-    private val LOG = LogFactory.getLog(WalletController::class.java)
+    private val LOG = LogFactory.getLog(InfuraController::class.java)
 
     // 创建/绑定以太坊账户
     @PostMapping("/create_account")
@@ -157,7 +155,7 @@ class WalletController {
 
         // 将交易请求提交至以太坊节点
         response.status = "FAIL"
-        return Transfer.sendFunds(EtherBroker.broker, credentials, request.to, BigDecimal(request.value), Convert.Unit.ETHER)
+        return Transfer.sendFunds(broker, credentials, request.to, BigDecimal(request.value), Convert.Unit.ETHER)
                 .sendAsync().toMono()
                 .map {
                     // 交易被接收
@@ -187,7 +185,7 @@ class WalletController {
     // 显示交易信息，调试用途
     private fun checkTransactionReceipt(it: TransactionReceipt, response: SendTransResponse) {
         LOG.info("...................................................  getting block ${it.blockHash} .........")
-        val bret = EtherBroker.broker.ethGetBlockByHash(it.blockHash, true).send()
+        val bret = broker.ethGetBlockByHash(it.blockHash, true).send()
         if (bret.hasError()) {
             LOG.info(">>>>>>>>>>>>>>>>>> hash: ${it.blockHash} error = ${bret.error.code} msg = ${bret.error.message}")
         } else {
@@ -196,7 +194,7 @@ class WalletController {
         }
         val hash = it.transactionHash
         LOG.info("...................................................  getting transaction $hash .........")
-        val ret = EtherBroker.broker.ethGetTransactionByHash(hash).send()
+        val ret = broker.ethGetTransactionByHash(hash).send()
         if (ret.hasError()) {
             LOG.info(">>>>>>>>>>>>>>>>>> hash: $hash error = ${ret.error.code} msg = ${ret.error.message}")
         } else {
@@ -212,53 +210,6 @@ class WalletController {
         }
     }
 
-    // 以太币转账 - 不等待结果，由调用端通过批处理查询结果
-    @PostMapping("/trans_async")
-    fun transAsync(@Valid @RequestBody request: SendTrans,
-                  @RequestParam("sign") sign: String?) : Mono<SendTransResponse> {
-        LOG.info(request)
-        // 参数检查，权限验证
-        var response = checkTransAuth(request, sign)
-        if (!(response.status.isBlank() || response.status == "OK")) {
-            LOG.info(response)
-            return Mono.just(response)
-        }
-
-        val credentials = Account.loadCredentials(request.account, request.password)
-        if (credentials == null) {
-            response.status = "PRIVATE_KEY_ERROR"
-            return Mono.just(response)
-        }
-
-        // 将交易请求提交至以太坊节点
-        response.status = "FAIL"
-        return Transfer.sendFunds(EtherBroker.broker, credentials, request.to, BigDecimal(request.value), Convert.Unit.ETHER)
-                .sendAsync().toMono()
-                .map {
-                    // 交易被接收
-                    val receipt = it.toString()
-                    LOG.info("receipt: $receipt")
-                    val status = it.status
-                    if (status != "0x1") {
-                        response.status = "ETHER_ERROR"
-                        response.msg = "unknown status returned: $status"
-                    } else {
-                        response.status = "OK"
-                        response.hash = it.transactionHash
-                        checkTransactionReceipt(it, response)
-                    }
-                    LOG.info(response)
-                    response
-                }
-                .onErrorResume {
-                    // 发生错误
-                    response.status = "ETHER_EXCEPTION"
-                    response.msg = it.message
-                    Mono.just(response)
-                }
-                .defaultIfEmpty (response)
-    }
-
     // 查询交易结果
     @GetMapping("/result/{hash}")
     fun getTransResult(@PathVariable(value = "hash") hash: String,
@@ -266,7 +217,7 @@ class WalletController {
         if (key == null || !Config.canQuery(key)) {
             // privilege checking disabled for now
         }
-        return EtherBroker.broker.ethGetTransactionByHash(hash).sendAsync().toMono().flatMap {
+        return broker.ethGetTransactionByHash(hash).sendAsync().toMono().flatMap {
             var response = GetTransResultResponse()
 
             when {
@@ -288,7 +239,7 @@ class WalletController {
                     response.value = Convert.fromWei(trans.value.toBigDecimal(), Convert.Unit.ETHER).toString()
                     var gas = trans.gas.multiply(trans.gasPrice).toBigDecimal()
                     response.gas = Convert.fromWei(gas, Convert.Unit.ETHER).toString()
-                    EtherBroker.broker.ethBlockNumber().sendAsync().toMono().map {
+                    broker.ethBlockNumber().sendAsync().toMono().map {
                         if (it.hasError()) {
                             response.status = "ERROR"
                             response.msg = "failure get latest block number"
@@ -313,9 +264,13 @@ class WalletController {
             return Mono.just(ResponseEntity(response, HttpStatus.BAD_REQUEST))
         }
         response.account = account
-        response.balance = EtherBroker.getBalance(account)
+        response.balance = getEtherBalance(account)
         response.status = if (response.balance.isBlank()) "FAIL" else "OK"
         return Mono.just(ResponseEntity(response, HttpStatus.OK))
+    }
+
+    private fun getEtherBalance(account: String): String {
+        return "0"
     }
 
     // 查询账户余额 （etherscan api)
@@ -391,7 +346,7 @@ class WalletController {
                                     response.usd = latest.usd
                                     response.btc = latest.btc
                                     response.time = latest.time
-                                    var gasPrice = EtherBroker.broker.ethGasPrice().send()
+                                    var gasPrice = broker.ethGasPrice().send()
                                     response.gasPrice = if (gasPrice.hasError()) "1000000000" else gasPrice.gasPrice.toString()
                                     if (!response.gasPrice.isNullOrBlank())
                                         latest.gasPrice = response.gasPrice
@@ -403,36 +358,20 @@ class WalletController {
                 .defaultIfEmpty(ResponseEntity(GetMarketPriceResponse(), HttpStatus.NOT_FOUND))
     }
 
-    // 返回区块链同步状态
-    @GetMapping("/sync")
-    fun getSyncStatus(@RequestParam("sign") sign: String?): Mono<ResponseEntity<EthSyncing.Result>> {
-        val admin = EtherBroker.admin
-        LOG.info("signature = <$sign>")
-
-        return if (sign.equals("test"))
-            Mono.just(ResponseEntity(HttpStatus.OK))
-        else
-            admin.ethSyncing().sendAsync().toMono()
-                    .map {
-                        ResponseEntity(it.result, HttpStatus.OK)
-                    }
-                    .defaultIfEmpty(ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR))
-    }
-
     // 返回区块信息
     @GetMapping("/block/{name}")
     fun getBlockInfo(@PathVariable(value = "name") name: String?): Mono<ResponseEntity<EthBlock.Block>> {
         return if (name == null || name.isBlank())
-            EtherBroker.broker.ethGetBlockByNumber(DefaultBlockParameter.valueOf("latest"), true)
+            broker.ethGetBlockByNumber(DefaultBlockParameter.valueOf("latest"), true)
                     .sendAsync().toMono().map {
                         ResponseEntity(it.result, HttpStatus.OK)
                     }
         else if (name.startsWith("0x", true))
-            EtherBroker.broker.ethGetBlockByHash(name,true).sendAsync().toMono().map {
+            broker.ethGetBlockByHash(name,true).sendAsync().toMono().map {
                 ResponseEntity(it.result, HttpStatus.OK)
             }
         else
-            EtherBroker.broker.ethGetBlockByNumber(DefaultBlockParameter.valueOf(BigInteger(name)), true)
+            broker.ethGetBlockByNumber(DefaultBlockParameter.valueOf(BigInteger(name)), true)
                     .sendAsync().toMono().map {
                         ResponseEntity(it.result, HttpStatus.OK)
                     }
@@ -441,7 +380,7 @@ class WalletController {
     // 返回最新区块信息
     @GetMapping("/block")
     fun getLatestBlockInfo(): Mono<ResponseEntity<EthBlock.Block>> {
-        return EtherBroker.broker.ethGetBlockByNumber(DefaultBlockParameter.valueOf("latest"), true)
+        return broker.ethGetBlockByNumber(DefaultBlockParameter.valueOf("latest"), true)
                     .sendAsync().toMono().map {
                         ResponseEntity(it.result, HttpStatus.OK)
                     }
@@ -450,7 +389,7 @@ class WalletController {
     // 查询交易信息
     @GetMapping("/trans/{hash}")
     fun getTrans(@PathVariable(value = "hash") hash: String): Mono<ResponseEntity<EthTransaction>> {
-        return EtherBroker.broker.ethGetTransactionByHash(hash).sendAsync().toMono().map {
+        return broker.ethGetTransactionByHash(hash).sendAsync().toMono().map {
             ResponseEntity(it, HttpStatus.OK)
         }
     }

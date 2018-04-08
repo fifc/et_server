@@ -1,12 +1,10 @@
 package com.ethwal.server
 
-import com.ethwal.server.api.GetMarketPriceResponse
-import org.springframework.beans.factory.annotation.Value
-import org.springframework.context.annotation.Configuration
 import org.springframework.stereotype.Component
 
 @Component
 object Config {
+    const val priceUpdatePeriod = 15 // 行情刷新时间，秒
     // network
     const val network = "rinkeby"
     // 是否全节点模式
@@ -16,9 +14,15 @@ object Config {
     //const val keystoreDir = "/opt/keystore"
 
     // ipc/rpc 配置
-    //const val web3jUrl = "/home/etherum/rinkeby/geth.ipc"
-    //const val web3jUrl = "\\\\.\\pipe\\geth.ipc"
-    const val web3jUrl = "http://eth.gboot.cc:8000"
+    const val useInfura = true
+    const val infuraKey = "ZlzjMlCBK4e96fJhZ3Vb"
+    const val etherscanKey = "BMI7CIXTWWYI99F9QVV41EMH85W9R9VYUR"
+    val web3jUrl = if (useInfura)
+        "https://$network.infura.io/$infuraKey"
+    else
+        //"/home/etherum/rinkeby/geth.ipc"
+        //"\\\\.\\pipe\\geth.ipc"
+        "http://eth.gboot.cc:8000"
 
     // url of balance query api
     val uriBase = when (network) {
@@ -60,9 +64,4 @@ object Config {
         val auth = this.authMap[key]?.second?:0L
         return (auth and 0x08L) != 0L
     }
-
-    const val etherscanKey = "BMI7CIXTWWYI99F9QVV41EMH85W9R9VYUR"
-
-    const val priceUpdatePeriod = 15 // 行情刷新时间，秒
-
 }
