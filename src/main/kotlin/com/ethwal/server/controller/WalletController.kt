@@ -8,9 +8,7 @@ import com.ethwal.server.model.Wallet
 import com.ethwal.server.repository.TransRepository
 import com.ethwal.server.repository.WalletRepository
 import com.google.common.hash.Hashing
-//import jdk.incubator.http.HttpClient
 import org.apache.commons.logging.LogFactory
-import org.reactivestreams.Publisher
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.Example
 import org.springframework.http.HttpStatus
@@ -23,24 +21,20 @@ import reactor.core.publisher.Mono
 import javax.validation.Valid
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.reactive.function.client.WebClient
-import org.web3j.protocol.Web3j
-//import org.web3j.crypto.WalletUtils
-//import org.web3j.protocol.admin.methods.response.PersonalListAccounts
 import org.web3j.protocol.core.DefaultBlockParameter
 import org.web3j.protocol.core.methods.response.EthBlock
 import org.web3j.protocol.core.methods.response.EthSyncing
 import org.web3j.protocol.core.methods.response.EthTransaction
 import org.web3j.protocol.core.methods.response.TransactionReceipt
+import org.web3j.tx.RawTransactionManager
 import org.web3j.tx.Transfer
 import org.web3j.utils.Convert
 import reactor.core.publisher.toMono
-import reactor.core.scheduler.Schedulers
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.nio.charset.StandardCharsets
 import java.time.LocalDateTime
 import java.time.ZoneOffset
-//import java.util.function.Predicate
 
 @RestController
 //@RequestMapping("/0")
@@ -158,7 +152,12 @@ class WalletController {
 
         // 将交易请求提交至以太坊节点
         response.status = "FAIL"
-        return Transfer.sendFunds(EtherBroker.broker, credentials, request.to, BigDecimal(request.value), Convert.Unit.ETHER)
+        val transactionManager = RawTransactionManager(EtherBroker.broker, credentials)
+        val transfer = Transfer(EtherBroker.broker, transactionManager)
+        val gasPrice = transfer.requestCurrentGasPrice()
+        val gasLimit = Transfer.GAS_LIMIT
+        //return Transfer.sendFunds(EtherBroker.broker, credentials, request.to, BigDecimal(request.value), Convert.Unit.ETHER)
+        return transfer.sendFunds(request.to, BigDecimal(request.value), Convert.Unit.ETHER, gasPrice, gasLimit)
                 .sendAsync().toMono()
                 .map {
                     // 交易被接收

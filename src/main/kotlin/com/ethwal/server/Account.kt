@@ -11,6 +11,14 @@ import org.web3j.crypto.WalletUtils
 import reactor.core.publisher.Mono
 
 import java.io.File
+import java.nio.file.DirectoryStream
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.time.LocalDateTime
+import java.time.ZoneOffset
+import java.util.*
+import java.util.concurrent.TimeUnit
 
 /*
 {
@@ -25,6 +33,7 @@ import java.io.File
 class Account  {
     companion object {
         private val LOG = LogFactory.getLog(Account::class.java)
+        val random = Random()
 
         private fun getDestinationDir(): String {
             return Config.keystoreDir
@@ -78,6 +87,94 @@ class Account  {
             }
 
             return address
+        }
+        // 账户导入 - 私钥形式
+        fun importKey(key: String, password: String): Mono<String> {
+            return Mono.defer {
+                val keyFile = "accimport-${LocalDateTime.now().toEpochSecond(ZoneOffset.UTC)}-${random.nextLong()}"
+                val pwFile = "$keyFile-p"
+                var address: String? = null
+                var err: Throwable? = null
+                try {
+                    File(keyFile).printWriter().use {
+                        it.print(key)
+                    }
+                    File(pwFile).printWriter().write(password)
+                    //INFO [04-10|14:14:34] Maximum peer count                       ETH=25 LES=0 total=25
+                    //Address: {becac26346d9711e39bddc87acc699997ddc7ff8}
+                    val output = "./geth account import $keyFile --keystore ${Config.keystoreDir} --password $pwFile".runCommand(File("."))
+                    if (output == null || output.isBlank()) {
+                        throw Exception("system error")
+                    }
+                    val regex = """.*Address:.*\{([a-zA-Z0-9]+)\}""".toRegex()
+                    val result = regex.find(output)
+                    if (result != null) {
+                        address = result.value
+                    }
+                } catch (e: CipherException) {
+                    err = e
+                } catch (e: IOException) {
+                    err = e
+                } catch (e: InvalidAlgorithmParameterException) {
+                    err = e
+                } catch (e: NoSuchAlgorithmException) {
+                    err = e
+                } catch (e: NoSuchProviderException) {
+                    err = e
+                } finally {
+                    Files.delete(Paths.get(keyFile))
+                    Files.delete(Paths.get(pwFile))
+                }
+
+                if (err != null) {
+                    LOG.error(err)
+                    Mono.error(err)
+                } else {
+
+                    Mono.just(address?:"")
+                }
+            }
+        }
+
+        // 账户导入 - 文件形式
+        fun importFile(data: String, password: String): Mono<String> {
+            return Mono.defer {
+                var address = ""
+                var err: Throwable? = null
+                var keyFile = "accimport-${LocalDateTime.now().toEpochSecond(ZoneOffset.UTC)}-${random.nextLong()}"
+                try {
+                    File(keyFile).writer().write(data)
+                    val credentials = WalletUtils.loadCredentials(password, keyFile)
+                    address = credentials.address
+                    val destinationDir = getDestinationDir()
+                    createDir(destinationDir)
+                    val separator = System.getProperty("file.separator")
+                    val destKeyFile = "$destinationDir$separator$keyFile-$address"
+                    Files.move(Paths.get(keyFile), Paths.get(destKeyFile))
+                } catch (e: CipherException) {
+                    err = e
+                } catch (e: IOException) {
+                    err = e
+                } catch (e: InvalidAlgorithmParameterException) {
+                    err = e
+                } catch (e: NoSuchAlgorithmException) {
+                    err = e
+                } catch (e: NoSuchProviderException) {
+                    err = e
+                } finally {
+                }
+
+                if (err != null) {
+                    try {
+                        Files.delete(Paths.get(keyFile))
+                    } catch(e: Exception) { }
+                    LOG.error(err)
+                    Mono.error(err)
+                } else {
+
+                    Mono.just(address)
+                }
+            }
         }
 
         // 离线模式, 异步模式
@@ -146,8 +243,29 @@ class Account  {
             return if (list == null || list.isEmpty())
                 null
             else {
-                var cre = WalletUtils.loadCredentials(password, list[0])
-                cre
+                var credentilals = WalletUtils.loadCredentials(password, list[0])
+                credentilals
+            }
+        }
+
+        fun String.runCommand(workingDir: File, input: String? = null): String? {
+            return try {
+                val parts = this.split("\\s".toRegex())
+                val proc = ProcessBuilder(*parts.toTypedArray())
+                        .directory(workingDir)
+                        .redirectOutput(ProcessBuilder.Redirect.PIPE)
+                        .redirectError(ProcessBuilder.Redirect.PIPE)
+                        .start()
+
+                if (input != null) {
+                    proc.outputStream.write(input.toByteArray())
+                }
+
+                proc.waitFor(60, TimeUnit.MINUTES)
+                proc.inputStream.bufferedReader().readText()
+            } catch(e: IOException) {
+                e.printStackTrace()
+                null
             }
         }
     }

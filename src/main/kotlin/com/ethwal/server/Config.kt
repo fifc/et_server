@@ -16,7 +16,7 @@ object Config {
         "/opt/keystore"
 
     // ipc/rpc 配置
-    const val useInfura = true
+    const val useInfura = false
     const val infuraKey = "ZlzjMlCBK4e96fJhZ3Vb"
     const val etherscanKey = "BMI7CIXTWWYI99F9QVV41EMH85W9R9VYUR"
 

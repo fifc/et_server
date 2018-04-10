@@ -37,6 +37,7 @@ class AdminController {
                     Pair("cwd", System.getProperty("user.dir")),
                     Pair("node", Config.web3jUrl),
                     Pair("keystore", "internal"/*Config.keystoreDir*/),
+                    Pair("java", System.getProperty("java.version")),
                     Pair("clock", LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME))
             )
     }

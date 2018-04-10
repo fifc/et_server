@@ -8,7 +8,6 @@ import kotlin.experimental.and
 
 // TODO: transfer ether using smart contract
 class SmartContract {
-    private val digits = "0123456789abcdef"
 
     fun sha3(str: String): String {
         var hash = SHA3.Digest256()
@@ -17,10 +16,14 @@ class SmartContract {
         var sb = StringBuffer(s.size * 2)
         for (c in s) {
             val i = c.toInt() and 0x00ff
-            sb.append(digits[i shr 4])
-            sb.append(digits[i and 0x0f])
+            sb.append(hexDigitTable[i shr 4])
+            sb.append(hexDigitTable[i and 0x0f])
         }
 
         return sb.toString()
+    }
+
+    companion object {
+        private const val hexDigitTable = "0123456789abcdef"
     }
 }
