@@ -11,9 +11,7 @@ import org.web3j.crypto.WalletUtils
 import reactor.core.publisher.Mono
 
 import java.io.File
-import java.nio.file.DirectoryStream
 import java.nio.file.Files
-import java.nio.file.Path
 import java.nio.file.Paths
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -236,7 +234,7 @@ class Account  {
         fun loadCredentials(account: String, password: String): Credentials? {
             val dir = File(Config.keystoreDir)
             val pattern = account.substring(2)
-            val list = dir.listFiles({ dir, name->
+            val list = dir.listFiles({ _, name->
                 name.contains(pattern, true)
             })
 
