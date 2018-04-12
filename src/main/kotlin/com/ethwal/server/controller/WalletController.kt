@@ -114,6 +114,11 @@ class WalletController {
             response.status = "INVALID_DEST_ACCOUNT"
             return response
         }
+        
+        if (request.account == request.to) {
+            response.status = "INVALID_DEST_ACCOUNT"
+            return response
+        }
 
          // 签名校验
         if (auth.second != 0xffffffffL && Config.enableHmac) {
