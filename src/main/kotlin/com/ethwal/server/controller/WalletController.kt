@@ -314,7 +314,7 @@ class WalletController {
         }
         response.account = account
         return EtherBroker.getBalance(account).map {
-            response.balance = it
+            response.balance = if (it.isBlank()) "" else  Convert.fromWei(it.toBigDecimal(), Convert.Unit.ETHER).toString()
             response.status = if (it.isBlank()) "FAIL" else "OK"
             ResponseEntity(response, HttpStatus.OK)
         }
@@ -341,7 +341,7 @@ class WalletController {
                                 response.account = account
                                 if (it.status == "1") {
                                     response.status = "OK"
-                                    response.balance = it.result
+                                    response.balance = Convert.fromWei(it.result.toBigDecimal(), Convert.Unit.ETHER).toString()
                                     ResponseEntity(response, HttpStatus.OK)
                                 } else {
                                     response.status = "FAIL"
