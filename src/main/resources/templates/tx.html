@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Ethereum Wallet</title>
+</head>
+<body>
+<h1>Contract</h1>
+
+<div>
+    <div>static:</div>
+    <div th:text="${content}">
+        you have to see message here instead...
+    </div>
+    <br/>
+    <div>dynamic:</div>
+    <div th:each="message : ${messageList}">
+        <div th:text="${message.payload}">
+            you have to see message here instead...
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,6 +1,7 @@
 package com.ethwal.server.controller
 
 import com.ethwal.server.Config
+import com.ethwal.server.EtherBroker
 import org.springframework.core.io.FileSystemResource
 import org.springframework.http.CacheControl
 import org.springframework.http.HttpStatus
@@ -8,16 +9,38 @@ import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.reactive.result.view.Rendering
+import org.thymeleaf.spring5.context.webflux.ReactiveDataDriverContextVariable
+import org.web3j.protocol.Web3j
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
+import java.time.Duration
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+
+data class AdminMessage(var payload: String? = null)
 
 @Controller
 @RequestMapping("/")
 class AdminController {
     @GetMapping("/")
-    fun homepage(model: Model): Mono<String> {
-        return Mono.just("index")
+    fun homepage(model: Model): Rendering {
+        var status = "running"
+        return Rendering.view("index")
+                .modelAttribute("status", status)
+                .modelAttribute("java", System.getProperty("java.version"))
+                .modelAttribute("web3j", EtherBroker.broker.web3ClientVersion().send().result)
+                .modelAttribute("messageList", ReactiveDataDriverContextVariable(
+                        Flux.zip(
+                               Flux.interval(Duration.ofMillis(1)),
+                               Flux.just(
+                                       AdminMessage("ethereum ok"),
+                                       AdminMessage("mongodb cluster ok")
+                               )
+                        ).map { it.t2 }
+                ))
+                .build()
+
     }
 
     @GetMapping("/testkey")
