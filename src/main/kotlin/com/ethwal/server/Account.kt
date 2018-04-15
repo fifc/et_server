@@ -241,8 +241,14 @@ class Account  {
             return if (list == null || list.isEmpty())
                 null
             else {
-                var credentilals = WalletUtils.loadCredentials(password, list[0])
-                credentilals
+                try {
+                    var credentilals = WalletUtils.loadCredentials(password, list[0])
+                    credentilals
+                } catch (e: Exception) {
+                    LOG.info("invalid address or password: $account")
+                    LOG.info(e)
+                    null
+                }
             }
         }
 

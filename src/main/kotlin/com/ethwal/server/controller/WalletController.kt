@@ -114,7 +114,7 @@ class WalletController {
             response.status = "INVALID_DEST_ACCOUNT"
             return response
         }
-        
+
         if (request.account == request.to) {
             response.status = "INVALID_DEST_ACCOUNT"
             return response
@@ -151,7 +151,7 @@ class WalletController {
 
         val credentials = Account.loadCredentials(request.account, request.password)
         if (credentials == null) {
-            response.status = "PRIVATE_KEY_ERROR"
+            response.status = "ACCOUNT_PASSWORD_ERROR"
             return Mono.just(response)
         }
 
@@ -231,13 +231,18 @@ class WalletController {
 
         val credentials = Account.loadCredentials(request.account, request.password)
         if (credentials == null) {
-            response.status = "PRIVATE_KEY_ERROR"
+            response.status = "ACCOUNT_PASSWORD_ERROR"
             return Mono.just(response)
         }
 
         // 将交易请求提交至以太坊节点
         response.status = "FAIL"
-        return Transfer.sendFunds(EtherBroker.broker, credentials, request.to, BigDecimal(request.value), Convert.Unit.ETHER)
+        val transactionManager = RawTransactionManager(EtherBroker.broker, credentials)
+        val transfer = Transfer(EtherBroker.broker, transactionManager)
+        val gasPrice = transfer.requestCurrentGasPrice()
+        val gasLimit = Transfer.GAS_LIMIT
+        //return Transfer.sendFunds(EtherBroker.broker, credentials, request.to, BigDecimal(request.value), Convert.Unit.ETHER)
+        return transfer.sendFunds(request.to, BigDecimal(request.value), Convert.Unit.ETHER, gasPrice, gasLimit)
                 .sendAsync().toMono()
                 .map {
                     // 交易被接收
