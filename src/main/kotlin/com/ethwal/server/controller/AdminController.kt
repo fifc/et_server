@@ -26,10 +26,9 @@ class AdminController {
     @GetMapping("/")
     fun homepage(model: Model): Rendering {
         var status = "running"
-        return Rendering.view("index")
+        val rendering = Rendering.view("index")
                 .modelAttribute("status", status)
                 .modelAttribute("java", System.getProperty("java.version"))
-                .modelAttribute("web3j", EtherBroker.broker.web3ClientVersion().send().result)
                 .modelAttribute("messageList", ReactiveDataDriverContextVariable(
                         Flux.zip(
                                Flux.interval(Duration.ofMillis(1)),
@@ -39,8 +38,14 @@ class AdminController {
                                )
                         ).map { it.t2 }
                 ))
-                .build()
 
+        try {
+            val ver =EtherBroker.broker.web3ClientVersion().send()
+            rendering.modelAttribute("web3j", if (ver.hasError()) ver.error.message else ver.result)
+        } catch (e: Exception) {
+            rendering.modelAttribute("web3j", e.message.toString())
+        }
+        return rendering.build()
     }
 
     @GetMapping("/testkey")
