@@ -28,6 +28,7 @@ class AdminController {
         var status = "running"
         val rendering = Rendering.view("index")
                 .modelAttribute("status", status)
+                .modelAttribute("network", Config.network)
                 .modelAttribute("java", System.getProperty("java.version"))
                 .modelAttribute("messageList", ReactiveDataDriverContextVariable(
                         Flux.zip(
