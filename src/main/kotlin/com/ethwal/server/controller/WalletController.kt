@@ -229,44 +229,44 @@ class WalletController {
             return Mono.just(response)
         }
 
-        val credentials = Account.loadCredentials(request.account, request.password)
-        if (credentials == null) {
-            response.status = "ACCOUNT_PASSWORD_ERROR"
-            return Mono.just(response)
-        }
-
-        // 将交易请求提交至以太坊节点
-        response.status = "FAIL"
-        val transactionManager = RawTransactionManager(EtherBroker.broker, credentials)
-        val transfer = Transfer(EtherBroker.broker, transactionManager)
-        val gasPrice = transfer.requestCurrentGasPrice()
-        val gasLimit = Transfer.GAS_LIMIT
-        //return Transfer.sendFunds(EtherBroker.broker, credentials, request.to, BigDecimal(request.value), Convert.Unit.ETHER)
-        return transfer.sendFunds(request.to, BigDecimal(request.value), Convert.Unit.ETHER, gasPrice, gasLimit)
-                .sendAsync().toMono()
-                .map {
-                    // 交易被接收
-                    val receipt = it.toString()
-                    LOG.info("receipt: $receipt")
-                    val status = it.status
-                    if (status != "0x1") {
-                        response.status = "ETHER_ERROR"
-                        response.msg = "unknown status returned: $status"
-                    } else {
-                        response.status = "OK"
-                        response.hash = it.transactionHash
-                        checkTransactionReceipt(it, response)
+        response.status = "ACCOUNT_PASSWORD_ERROR"
+        return Account.checkoutCredentials(request.account, request.password).flatMap {
+            // 将交易请求提交至以太坊节点
+            response.status = "FAIL"
+            val transactionManager = RawTransactionManager(EtherBroker.broker, it)
+            val transfer = Transfer(EtherBroker.broker, transactionManager)
+            val gasPrice = transfer.requestCurrentGasPrice()
+            val gasLimit = Transfer.GAS_LIMIT
+            //return Transfer.sendFunds(EtherBroker.broker, credentials, request.to, BigDecimal(request.value), Convert.Unit.ETHER)
+            transfer.sendFunds(request.to, BigDecimal(request.value), Convert.Unit.ETHER, gasPrice, gasLimit)
+                    .sendAsync().toMono()
+                    .map {
+                        // 交易被接收
+                        val receipt = it.toString()
+                        LOG.info("receipt: $receipt")
+                        val status = it.status
+                        if (status != "0x1") {
+                            response.status = "ETHER_ERROR"
+                            response.msg = "unknown status returned: $status"
+                        } else {
+                            response.status = "OK"
+                            response.hash = it.transactionHash
+                            checkTransactionReceipt(it, response)
+                        }
+                        LOG.info(response)
+                        response
                     }
-                    LOG.info(response)
-                    response
-                }
-                .onErrorResume {
-                    // 发生错误
-                    response.status = "ETHER_EXCEPTION"
-                    response.msg = it.message
-                    Mono.just(response)
-                }
-                .defaultIfEmpty (response)
+                    .onErrorResume {
+                        // 发生错误
+                        response.status = "ETHER_EXCEPTION"
+                        response.msg = it.message
+                        Mono.just(response)
+                    }
+                    .defaultIfEmpty (response)
+        }.onErrorResume {
+            response.msg = it.message
+            Mono.just(response)
+        }.defaultIfEmpty(response)
     }
 
     // 查询交易确认信息

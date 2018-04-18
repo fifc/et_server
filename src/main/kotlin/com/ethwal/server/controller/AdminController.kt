@@ -64,7 +64,7 @@ class AdminController {
                     Pair("public key", address.substring(2)),
                     Pair("os", System.getProperty("os.name")),
                     Pair("cwd", System.getProperty("user.dir")),
-                    Pair("node", Config.web3jUrl),
+                    Pair("node", if (Config.web3jUrl.contains("infura.io", true)) "infura" else Config.web3jUrl),
                     Pair("keystore", "internal"/*Config.keystoreDir*/),
                     Pair("java", System.getProperty("java.version")),
                     Pair("clock", LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME))

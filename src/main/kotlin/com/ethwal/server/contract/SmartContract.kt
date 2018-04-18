@@ -58,7 +58,9 @@ class ContractTestController {
                                        SmartContractMessage("two"),
                                        SmartContractMessage("three")
                                )
-                        ).map { it.t2 }
+                        ).map {
+                            it.t2
+                        }
                 ))
                 .build()
     }

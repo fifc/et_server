@@ -22,11 +22,11 @@ object Config {
     const val etherscanKey = "BMI7CIXTWWYI99F9QVV41EMH85W9R9VYUR"
 
     val web3jUrl = when {
-        useInfura -> "https://$network.infura.io/$infuraKey"
         System.getProperty("os.name").startsWith("Windows", true)
         //-> "\\\\.\\pipe\\geth.ipc"
-        -> "http://eth.gboot.cc:8000"
+        -> "http://e.gboot.cc:8000"
         //-> "https://$network.infura.io/$infuraKey"
+        useInfura -> "https://$network.infura.io/$infuraKey"
         else -> "/home/etherum/rinkeby/geth.ipc"
     }
 

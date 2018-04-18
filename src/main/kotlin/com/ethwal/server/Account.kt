@@ -17,6 +17,9 @@ import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.util.*
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.Lock
+import javax.security.auth.callback.LanguageCallback
+import kotlin.concurrent.withLock
 
 /*
 {
@@ -31,7 +34,8 @@ import java.util.concurrent.TimeUnit
 class Account  {
     companion object {
         private val LOG = LogFactory.getLog(Account::class.java)
-        val random = Random()
+        private var credentialMap: MutableMap<String, Pair<Credentials, LocalDateTime>> = mutableMapOf()
+        private val random = Random()
 
         private fun getDestinationDir(): String {
             return Config.keystoreDir
@@ -252,7 +256,79 @@ class Account  {
             }
         }
 
-        fun String.runCommand(workingDir: File, input: String? = null): String? {
+        // 根据用户输入的密码解锁账户
+        fun checkoutCredentials(account: String, password: String): Mono<Credentials> {
+            synchronized(credentialMap, {
+                var cr = credentialMap.get(account)
+                if (cr != null) {
+                    credentialMap.remove(account)
+                    if (cr.second.plusMinutes(30).isAfter(LocalDateTime.now())) {
+                        credentialMap.put(account, Pair(cr.first, LocalDateTime.now()))
+                        return Mono.just(cr.first)
+                    }
+                }
+            })
+
+            return Mono.defer {
+                val dir = File(Config.keystoreDir)
+                val pattern = account.substring(2)
+                val list = dir.listFiles({ _, name ->
+                    name.contains(pattern, true)
+                })
+
+                if (list == null || list.isEmpty())
+                    Mono.empty<Credentials>()
+                else {
+                    try {
+                        var credentials = WalletUtils.loadCredentials(password, list[0])
+                        addCredentialCache(account, credentials)
+                        Mono.just(credentials)
+                    } catch (e: Exception) {
+                        LOG.info("invalid address or password: $account")
+                        LOG.info(e)
+                        Mono.error<Credentials>(e)
+                    }
+                }
+            }
+        }
+
+        // 缓存加载的credentials
+        private fun addCredentialCache(account: String, credentials: Credentials) {
+            val cacheNum = 1000
+            val timestamp = LocalDateTime.now()
+            synchronized(credentialMap, {
+                if (credentialMap.size >= cacheNum) {
+                    var key :String? = null
+                    var oldest = timestamp
+                    var removeList : MutableList<String> = mutableListOf()
+                    for (item in credentialMap) {
+                        if (item.value.second.plusMinutes(30).isBefore(timestamp)) {
+                            removeList.add(item.key)
+                        } else {
+                           if (removeList.isEmpty() && item.value.second.isBefore(oldest)) {
+                               key = item.key
+                               oldest = item.value.second
+
+                           }
+                        }
+                    }
+                    if (removeList.isEmpty()) {
+                        if (key != null)
+                            credentialMap.remove(key)
+                        else
+                            credentialMap.clear()
+                    } else {
+                        for (item in removeList)
+                            credentialMap.remove(item)
+                    }
+
+                }
+                credentialMap.put(account, Pair(credentials, timestamp))
+            })
+        }
+
+        // 运行shell命令，返回程序的输出
+        private fun String.runCommand(workingDir: File, input: String? = null): String? {
             return try {
                 val parts = this.split("\\s".toRegex())
                 val proc = ProcessBuilder(*parts.toTypedArray())
