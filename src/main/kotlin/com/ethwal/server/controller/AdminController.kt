@@ -29,7 +29,7 @@ class AdminController {
         val rendering = Rendering.view("index")
                 .modelAttribute("status", status)
                 .modelAttribute("network", Config.network)
-                .modelAttribute("java", System.getProperty("java.version"))
+                .modelAttribute("java", """${System.getProperty("java.version")}/${System.getProperty("java.vm.version")}""")
                 .modelAttribute("messageList", ReactiveDataDriverContextVariable(
                         Flux.zip(
                                Flux.interval(Duration.ofMillis(1)),

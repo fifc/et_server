@@ -49,7 +49,7 @@ class WalletController {
     // 创建/绑定以太坊账户
     @PostMapping("/create_account")
     fun createAccount(@Valid @RequestBody request: CreateAccount, @RequestParam("sign") sign: String?) : Mono<CreateAccountResponse> {
-        LOG.info(request)
+        LOG.info("CreateAccount: user ${request.userId} key ${request.key} sign $sign")
         var response = CreateAccountResponse()
         response.id = request.id
         if (request.password.isBlank() || request.password.length < 6) {
@@ -73,11 +73,12 @@ class WalletController {
                 wallet.userId = request.userId
                 walletRepository.save(Wallet(response.account))
             }
-            LOG.info(response)
+            LOG.info("user ${request.userId} account ${response.account}")
             response
         }.onErrorResume {
             response.status = "CREATE_ACCOUNT_ERROR"
             response.msg = it.message.toString()
+            LOG.info(it)
             //Mono.error(it)
             Mono.just(response)
         }
@@ -144,6 +145,7 @@ class WalletController {
         LOG.info(request)
         // 参数检查，权限验证
         var response = checkTransAuth(request, sign)
+        response.msg = "建议调用异步接口"
         if (!(response.status.isBlank() || response.status == "OK")) {
             LOG.info(response)
             return Mono.just(response)
@@ -475,10 +477,7 @@ class WalletController {
     // 数据库相关的操作，非必需
     @GetMapping("/walls")
     fun getAllWallets() : Flux<Wallet> {
-        if (walletRepository == null)
-            return Flux.empty()
-
-        return walletRepository.findAll()
+        return walletRepository?.findAll() ?: Flux.empty()
     }
 
     // 数据库相关的操作，非必需
@@ -489,9 +488,9 @@ class WalletController {
                     println("found wallet: ${wallet.account}")
                     t + 1
                 })
-                ?.map({ t ->
-                    if (t != 0L) {
-                        ResponseEntity(t, HttpStatus.OK)
+                ?.map({
+                    if (it != 0L) {
+                        ResponseEntity(it, HttpStatus.OK)
                     } else {
                         ResponseEntity(HttpStatus.NOT_FOUND)
                     }
@@ -505,9 +504,9 @@ class WalletController {
     fun updateWallet(@PathVariable(value = "account") account: String,
                     @Valid @RequestBody wallet: Wallet): Mono<ResponseEntity<Wallet>> {
         return walletRepository!!.findById(account)
-                .flatMap({ existingWallet ->
-                    existingWallet.description = wallet.description
-                    walletRepository.save(existingWallet)
+                .flatMap({
+                    it.description = wallet.description
+                    walletRepository.save(it)
                 })
                 .map({ updatedTweet -> ResponseEntity(updatedTweet, HttpStatus.OK) })
                 .defaultIfEmpty(ResponseEntity(HttpStatus.NOT_FOUND))
@@ -516,9 +515,9 @@ class WalletController {
     // 数据库相关的操作，非必需
     @GetMapping( value = ["/stream/wall"],  produces = [MediaType.TEXT_EVENT_STREAM_VALUE])
     fun streamAllWallets(): Flux<Wallet> {
-        return walletRepository!!.findAll().map {wallet ->
-            wallet.description += " - stream"
-            wallet
+        return walletRepository!!.findAll().map {
+            it.description += " - stream"
+            it
         }
     }
 }

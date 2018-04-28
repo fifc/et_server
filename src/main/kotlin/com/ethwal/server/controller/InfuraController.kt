@@ -37,7 +37,7 @@ import java.time.ZoneOffset
 
 // JsonRPC接口，用于web3j封装不满足需求的情况。暂未启用
 @RestController
-@RequestMapping("/infura")
+@RequestMapping("/infura/api")
 class InfuraController {
     var broker = Web3j.build(InfuraHttpService(Config.web3jUrl))
 

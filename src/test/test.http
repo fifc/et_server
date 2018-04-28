@@ -1,0 +1,38 @@
+# For a quick start check out our HTTP Requests collection (Tools|HTTP Client|Open HTTP Requests Collection).
+#
+# Following HTTP Request Live Templates are available:
+# * 'gtrp' and 'gtr' create a GET request with or without query parameters;
+# * 'ptr' and 'ptrp' create a POST request with a simple or parameter-like body;
+# * 'mptr' and 'fptr' create a POST request to submit a form with a text or file field (multipart/form-data);
+POST http://localhost/create_account
+Content-Type: application/json
+
+{
+    "userId": 1234,
+    "password": "11111111",
+    "key": ".",
+    "id": "123",
+    "nonce": 1
+}
+
+###
+POST http://localhost/ct?sign=sdfsd
+Content-Type: application/json
+
+{
+    "password": "1111",
+    "account": "0xbecac26346d9711e39bddc87acc699997ddc7ff8",
+    "account1": "0xec76e8d050fd72d362f34a70b56257a5152e7094",
+    "account2": "0xfdff8639b0c6bbfb1d55691c71bb2f70fd3134d3",
+    "account3": "0x282ad19bc5e5f40c0906edd776f64827736a7b3e",
+    "to": "0x12f20c9438c992a5801b20004781edeb5692b3e4",
+    "value": "0.000098",
+    "gas": "0.000002",
+    "gasLimit": "0.00005",
+    "nonce": 123456,
+    "key": ".",
+    "id": "12345678"
+}
+
+###
+###
