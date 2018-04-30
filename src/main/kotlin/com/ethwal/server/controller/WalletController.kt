@@ -142,10 +142,10 @@ class WalletController {
     @PostMapping("/send_trans")
     fun sendTrans(@Valid @RequestBody request: SendTrans,
                   @RequestParam("sign") sign: String?) : Mono<SendTransResponse> {
-        LOG.info(request)
+        LOG.info("send_trans: id ${request.id} from ${request.account} to ${request.to} value ${request.value}")
         // 参数检查，权限验证
         var response = checkTransAuth(request, sign)
-        response.msg = "建议调用异步接口"
+        response.msg = "请调用异步接口"
         if (!(response.status.isBlank() || response.status == "OK")) {
             LOG.info(response)
             return Mono.just(response)
@@ -181,13 +181,14 @@ class WalletController {
                         response.hash = it.transactionHash
                         checkTransactionReceipt(it, response)
                     }
-                    LOG.info(response)
+                    LOG.info("send_trans: id ${request.id} status ${response.status} msg ${response.msg} hash ${response.hash}")
                     response
                 }
                 .onErrorResume {
                     // 发生错误
                     response.status = "ETHER_EXCEPTION"
                     response.msg = it.message
+                    LOG.info("send_trans: id ${request.id} status ${response.status} msg ${response.msg}")
                     Mono.just(response)
                 }
                 .defaultIfEmpty (response)
@@ -225,7 +226,7 @@ class WalletController {
     @PostMapping("/trans_async")
     fun transAsync(@Valid @RequestBody request: SendTrans,
                   @RequestParam("sign") sign: String?) : Mono<SendTransResponse> {
-        LOG.info(request)
+        LOG.info("trans_async: id ${request.id} from ${request.account} to ${request.to} value ${request.value}")
         // 参数检查，权限验证
         var response = checkTransAuth(request, sign)
         if (!(response.status.isBlank() || response.status == "OK")) {
@@ -259,13 +260,14 @@ class WalletController {
                             response.hash = it.transactionHash
                             checkTransactionReceipt(it, response)
                         }
-                        LOG.info(response)
+                        LOG.info("trans_async: id ${request.id} status ${response.status} msg ${response.msg} hash ${response.hash}")
                         response
                     }
                     .onErrorResume {
                         // 发生错误
                         response.status = "ETHER_EXCEPTION"
                         response.msg = it.message
+                        LOG.info("trans_async: id ${request.id} status ${response.status} msg ${response.msg}")
                         Mono.just(response)
                     }
                     .defaultIfEmpty (response)
