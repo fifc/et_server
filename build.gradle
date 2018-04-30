@@ -66,7 +66,8 @@ dependencies {
 	compile('org.web3j:core:+')
 	compile('org.web3j:infura:+')
 	compile('com.google.guava:guava:+')
-	compile "com.xenomachina:kotlin-argparser:+"
+	compile("com.xenomachina:kotlin-argparser:+")
+	compile("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:+")
 	testCompile('org.springframework.boot:spring-boot-starter-test')
 	testCompile('io.projectreactor:reactor-test')
 }

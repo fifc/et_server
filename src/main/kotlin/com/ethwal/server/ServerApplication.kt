@@ -21,7 +21,9 @@ fun main(args: Array<String>) {
             println("no_infura is set")
         }
     }
-    runApplication<ServerApplication>(*args)
+
+    Health.appContext = runApplication<ServerApplication>(*args)
+    Health.assertInherentition()
 }
 
 class MyArgs(parser: ArgParser) {
@@ -33,3 +35,4 @@ class MyArgs(parser: ArgParser) {
 
     val source :String by parser.positional("source filename").default ( "" )
 }
+

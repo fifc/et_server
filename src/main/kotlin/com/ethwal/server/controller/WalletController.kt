@@ -1,9 +1,7 @@
 package com.ethwal.server.controller
 
+import com.ethwal.server.*
 import  com.ethwal.server.api.*
-import com.ethwal.server.Account
-import com.ethwal.server.Config
-import com.ethwal.server.EtherBroker
 import com.ethwal.server.model.Wallet
 import com.ethwal.server.repository.TransRepository
 import com.ethwal.server.repository.WalletRepository
@@ -64,6 +62,8 @@ class WalletController {
         if (request.key == null || !Config.canOpenAccount(request.key!!)) {
              // ignore privilege checking for now
         }
+
+        Health.assertInherentition()
 
         return Account.newAsync(request.password).map {
             response.status = "OK"
@@ -157,6 +157,8 @@ class WalletController {
             return Mono.just(response)
         }
 
+        Health.assertInherentition()
+
         // 将交易请求提交至以太坊节点
         response.status = "FAIL"
         val transactionManager = RawTransactionManager(EtherBroker.broker, credentials)
@@ -231,6 +233,8 @@ class WalletController {
             return Mono.just(response)
         }
 
+        Health.assertInherentition()
+
         response.status = "ACCOUNT_PASSWORD_ERROR"
         return Account.checkoutCredentials(request.account, request.password).flatMap {
             // 将交易请求提交至以太坊节点
@@ -278,6 +282,9 @@ class WalletController {
         if (key == null || !Config.canQuery(key)) {
             // privilege checking disabled for now
         }
+
+        Health.assertInherentition()
+
         return EtherBroker.broker.ethGetTransactionByHash(hash).sendAsync().toMono().flatMap {
             var response = GetTransResultResponse()
 
