@@ -33,6 +33,7 @@ import java.math.BigInteger
 import java.nio.charset.StandardCharsets
 import java.time.LocalDateTime
 import java.time.ZoneOffset
+import kotlin.Exception
 
 @RestController
 //@RequestMapping("/0")
@@ -195,30 +196,39 @@ class WalletController {
     }
 
     // 显示交易信息，调试用途
-    private fun checkTransactionReceipt(it: TransactionReceipt, response: SendTransResponse) {
-        LOG.info("...................................................  getting block ${it.blockHash} .........")
-        val bret = EtherBroker.broker.ethGetBlockByHash(it.blockHash, true).send()
-        if (bret.hasError()) {
-            LOG.info(">>>>>>>>>>>>>>>>>> hash: ${it.blockHash} error = ${bret.error.code} msg = ${bret.error.message}")
-        } else {
-            val block = bret.block
-            LOG.info(">>>>>>>>>>>>>>>>>>>>>>>>>>> block ${block.hash}, miner ${block.miner} trans ${block.transactions.size}")
-        }
-        val hash = it.transactionHash
-        LOG.info("...................................................  getting transaction $hash .........")
-        val ret = EtherBroker.broker.ethGetTransactionByHash(hash).send()
-        if (ret.hasError()) {
-            LOG.info(">>>>>>>>>>>>>>>>>> hash: $hash error = ${ret.error.code} msg = ${ret.error.message}")
-        } else {
-            if (!ret.transaction.isPresent) {
-                LOG.info(">>>>>>>>>>>>>>>>>>  hash: $hash trans = <not presented>")
+    private fun checkTransactionReceipt(receipt: TransactionReceipt, response: SendTransResponse) {
+        try {
+            LOG.info("...................................................  getting block ${receipt.blockHash} .........")
+            val bret = EtherBroker.broker.ethGetBlockByHash(receipt.blockHash, true).send()
+            if (bret.hasError()) {
+                LOG.info(">>>>>>>>>>>>>>>>>> hash: ${receipt.blockHash} error = ${bret.error.code} msg = ${bret.error.message}")
             } else {
-                val trans = ret.transaction.get()
-                LOG.info(">>>>>>>>>>>>>>>>>>  block: ${trans.blockHash} value = ${trans.value} gas = ${trans.gas} gasPrice = ${trans.gasPrice}")
-                var gas = trans.gas.multiply(trans.gasPrice).toBigDecimal()
-                response.gas = Convert.fromWei(gas, Convert.Unit.ETHER).toString()
-                response.value = Convert.fromWei(trans.value.toBigDecimal(), Convert.Unit.ETHER).toString()
+                val block = bret.block
+                LOG.info(">>>>>>>>>>>>>>>>>>>>>>>>>>> block ${block.hash}, miner ${block.miner} trans ${block.transactions.size}")
             }
+        } catch (e: Exception) {
+            LOG.info("!! exception get block by hash ${receipt.blockHash}: ${e.message}")
+        }
+
+        val hash = receipt.transactionHash
+        try {
+            LOG.info("...................................................  getting transaction $hash .........")
+            val ret = EtherBroker.broker.ethGetTransactionByHash(hash).send()
+            if (ret.hasError()) {
+                LOG.info(">>>>>>>>>>>>>>>>>> hash: $hash error = ${ret.error.code} msg = ${ret.error.message}")
+            } else {
+                if (!ret.transaction.isPresent) {
+                    LOG.info(">>>>>>>>>>>>>>>>>>  hash: $hash trans = <not presented>")
+                } else {
+                    val trans = ret.transaction.get()
+                    LOG.info(">>>>>>>>>>>>>>>>>>  block: ${trans.blockHash} value = ${trans.value} gas = ${trans.gas} gasPrice = ${trans.gasPrice}")
+                    var gas = trans.gas.multiply(trans.gasPrice).toBigDecimal()
+                    response.gas = Convert.fromWei(gas, Convert.Unit.ETHER).toString()
+                    response.value = Convert.fromWei(trans.value.toBigDecimal(), Convert.Unit.ETHER).toString()
+                }
+            }
+        } catch (e: Exception) {
+            LOG.info("!! exception get transaction by hash $hash: ${e.message}")
         }
     }
 
@@ -294,11 +304,13 @@ class WalletController {
                 it.hasError() -> {
                     response.status = "ERROR"
                     response.msg = it.error.message
+                    LOG.info("error get transaction result: (${response.status} msg ${response.msg})")
                     Mono.just(ResponseEntity(response, HttpStatus.OK))
                 }
                 else -> if (!it.transaction.isPresent) {
                     response.status = "NOT_FOUND"
                     response.msg = "transaction not found"
+                    LOG.info("error get transaction result: (${response.status} msg ${response.msg})")
                     Mono.just(ResponseEntity(response, HttpStatus.OK))
                 } else {
                     response.status = "OK"
@@ -318,6 +330,7 @@ class WalletController {
                             response.confirmed = confirm >= 5
                             response.msg = "confirmation count = $confirm"
                         }
+                        LOG.info("transaction result: (${response.status} msg ${response.msg})")
                         ResponseEntity(response, HttpStatus.OK)
                     }
                 }

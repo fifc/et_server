@@ -6,8 +6,8 @@ import org.springframework.stereotype.Component
 object Config {
     const val priceUpdatePeriod = 15 // 行情刷新时间，秒
     // network
-    const val network = "rinkeby"
-    //const val network = "mainnet"
+    //const val network = "rinkeby"
+    const val network = "mainnet"
     // 是否全节点模式
     const val isFullNode = true
     //keystore目录,建议绝对路径
@@ -24,8 +24,8 @@ object Config {
     val web3jUrl = when {
         System.getProperty("os.name").startsWith("Windows", true)
         //-> "\\\\.\\pipe\\geth.ipc"
-        -> "http://e.gboot.cc:8000"
-        //-> "https://$network.infura.io/$infuraKey"
+        //-> "http://e.gboot.cc:8000"
+        -> "https://$network.infura.io/$infuraKey"
         useInfura -> "https://$network.infura.io/$infuraKey"
         else -> "/home/etherum/rinkeby/geth.ipc"
     }
