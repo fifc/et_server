@@ -215,13 +215,13 @@ class WalletController {
             LOG.info("...................................................  getting transaction $hash .........")
             val ret = EtherBroker.broker.ethGetTransactionByHash(hash).send()
             if (ret.hasError()) {
-                LOG.info(">>>>>>>>>>>>>>>>>> hash: $hash error = ${ret.error.code} msg = ${ret.error.message}")
+                LOG.info(">>>>>>>>>>>>>>>>>> transaction: $hash error = ${ret.error.code} msg = ${ret.error.message}")
             } else {
                 if (!ret.transaction.isPresent) {
-                    LOG.info(">>>>>>>>>>>>>>>>>>  hash: $hash trans = <not presented>")
+                    LOG.info(">>>>>>>>>>>>>>>>>>  transaction: $hash trans = <not presented>")
                 } else {
                     val trans = ret.transaction.get()
-                    LOG.info(">>>>>>>>>>>>>>>>>>  block: ${trans.blockHash} value = ${trans.value} gas = ${trans.gas} gasPrice = ${trans.gasPrice}")
+                    LOG.info(">>>>>>>>>>>>>>>>>>  transaction $hash block: ${trans.blockHash} value = ${trans.value} gas = ${trans.gas} gasPrice = ${trans.gasPrice}")
                     var gas = trans.gas.multiply(trans.gasPrice).toBigDecimal()
                     response.gas = Convert.fromWei(gas, Convert.Unit.ETHER).toString()
                     response.value = Convert.fromWei(trans.value.toBigDecimal(), Convert.Unit.ETHER).toString()
@@ -304,13 +304,13 @@ class WalletController {
                 it.hasError() -> {
                     response.status = "ERROR"
                     response.msg = it.error.message
-                    LOG.info("error get transaction result: (${response.status} msg ${response.msg})")
+                    LOG.info("error get transaction result: (${response.status} $hash ${response.msg})")
                     Mono.just(ResponseEntity(response, HttpStatus.OK))
                 }
                 else -> if (!it.transaction.isPresent) {
                     response.status = "NOT_FOUND"
                     response.msg = "transaction not found"
-                    LOG.info("error get transaction result: (${response.status} msg ${response.msg})")
+                    LOG.info("error get transaction result: (${response.status} $hash ${response.msg})")
                     Mono.just(ResponseEntity(response, HttpStatus.OK))
                 } else {
                     response.status = "OK"
@@ -330,7 +330,7 @@ class WalletController {
                             response.confirmed = confirm >= 5
                             response.msg = "confirmation count = $confirm"
                         }
-                        LOG.info("transaction result: (${response.status} msg ${response.msg})")
+                        LOG.info("transaction result: (${response.status} $hash ${response.msg})")
                         ResponseEntity(response, HttpStatus.OK)
                     }
                 }
