@@ -12,6 +12,7 @@ import org.springframework.data.domain.Example
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
+import org.springframework.transaction.TransactionTimedOutException
 import org.springframework.web.bind.annotation.*
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
@@ -277,7 +278,18 @@ class WalletController {
                         // 发生错误
                         response.status = "ETHER_EXCEPTION"
                         response.msg = it.message
-                        LOG.info("trans_async: id ${request.id} status ${response.status} msg ${response.msg}")
+
+                        var errType: String = when (it) {
+                            is TransactionTimedOutException -> {
+                                "timeout"
+                            }
+                            else -> {
+                                "exception"
+                            }
+                        }
+
+                        LOG.info("trans_async $errType: id ${request.id} status ${response.status} msg ${response.msg}")
+
                         Mono.just(response)
                     }
                     .defaultIfEmpty (response)
