@@ -24,7 +24,7 @@ object Config {
     val web3jUrl = when {
         System.getProperty("os.name").startsWith("Windows", true)
         //-> "\\\\.\\pipe\\geth.ipc"
-        -> "http://e.gboot.cc:8000"
+        -> "http://o.gboot.cc:8000"
         //-> "https://$network.infura.io/$infuraKey"
         useInfura -> "https://$network.infura.io/$infuraKey"
         else -> "/home/etherum/rinkeby/geth.ipc"

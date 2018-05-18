@@ -7,11 +7,12 @@ import kotlinx.coroutines.experimental.sync.Mutex
 import org.springframework.boot.ExitCodeGenerator
 import org.springframework.boot.SpringApplication
 import org.springframework.context.ApplicationContext
+import java.io.File
 import java.io.FileNotFoundException
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 
-data class LicenseInfo (var expire: Long = -1L, var name: String = "", var key: String = "")
+data class LicenseInfo (var id:Long = 0L, var expire: Long = -1L, var name: String = "", var user: String = "")
 
 object Health {
     var checkTime = 0L
@@ -43,11 +44,22 @@ object Health {
         val now = LocalDateTime.now().toEpochSecond(ZoneOffset.UTC)
         if (license.expire == -1L || license.expire <= now) {
             try {
-                license = mapper.readValue<LicenseInfo>("{ expire: 1526111000, name: ultimate_edition, key: foojsd997093ss98a }")
+                val line  = File("license.dat").readText().trim()
+                val data = Ecc.decryptString(line)
+                if (data != null) {
+                    license = mapper.readValue(data)
+                }
+
+                if (license.expire == -1L)
+                    println("invalid license data!!")
+                else
+                    println("license: $data")
+
             } catch (e: FileNotFoundException) {
+                println("license file not found!!")
 
             } catch (e: Exception) {
-
+                println("license exception: ${e.message}")
             }
         }
 
