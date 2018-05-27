@@ -54,11 +54,11 @@ class InfuraController {
         LOG.info(request)
         var response = CreateAccountResponse()
         response.id = request.id
-        if (request.password.isBlank() || request.password.length < 6) {
+        if (request.password.isNullOrBlank() || request.password.length < 6) {
             response.status = "INVALID_PASSWORD"
             return Mono.just(response)
         }
-        if (request.userId.isBlank()) {
+        if (request.userId.isNullOrBlank()) {
             response.status = "INVALID_USERID"
             return Mono.just(response)
         }
@@ -89,29 +89,29 @@ class InfuraController {
         var response = SendTransResponse()
         response.id = request.id
         val key = request.key
-        if (key == null || key.isBlank()) {
+        if (key.isNullOrBlank()) {
             response.status = "INVALID_KEY"
             return response
         }
 
         // 检查转账权限
         val auth = Config.authMap[key]
-        if (auth == null || !Config.canDoTrans(key)) {
+        if (auth == null || !Config.canDoTrans(key!!)) {
             response.status = "AUTH_FAIL"
             return response
         }
 
-        if (request.password.isBlank()) {
+        if (request.password.isNullOrBlank()) {
             response.status = "INVALID_PASSWORD"
             return response
         }
 
-        if (request.account.isBlank()) {
+        if (request.account.isNullOrBlank()) {
             response.status = "INVALID_ACCOUNT"
             return response
         }
 
-        if (request.to.isBlank()) {
+        if (request.to.isNullOrBlank()) {
             response.status = "INVALID_DEST_ACCOUNT"
             return response
         }
@@ -140,7 +140,7 @@ class InfuraController {
         LOG.info(request)
         // 参数检查，权限验证
         var response = checkTransAuth(request, sign)
-        if (!(response.status.isBlank() || response.status == "OK")) {
+        if (!(response.status.isNullOrBlank() || response.status == "OK")) {
             LOG.info(response)
             return Mono.just(response)
         }
@@ -257,14 +257,14 @@ class InfuraController {
     @GetMapping("/balance/{account}")
     fun getBalance(@PathVariable(value = "account") account: String): Mono<ResponseEntity<GetBalanceResponse>> {
         var response = GetBalanceResponse()
-        if (account.isBlank()) {
+        if (account.isNullOrBlank()) {
             response.status = "INVALID_ACCOUNT"
             return Mono.just(ResponseEntity(response, HttpStatus.BAD_REQUEST))
         }
         response.account = account
         return getEtherBalance(account).map {
             response.balance = it
-            response.status = if (it.isBlank()) "FAIL" else "OK"
+            response.status = if (it.isNullOrBlank()) "FAIL" else "OK"
             ResponseEntity(response, HttpStatus.OK)
         }
     }
@@ -277,7 +277,7 @@ class InfuraController {
     // 查询账户余额 （via EtherScan API)
     @GetMapping("/es_balance/{account}")
     fun getEsBalance(@PathVariable(value = "account") account: String): Mono<ResponseEntity<GetBalanceResponse>> {
-        if (account.isBlank()) {
+        if (account.isNullOrBlank()) {
             var response = GetBalanceResponse()
             response.status = "INVALID_ACCOUNT"
             return Mono.just(ResponseEntity(response, HttpStatus.BAD_REQUEST))
@@ -362,7 +362,7 @@ class InfuraController {
     // 返回区块信息
     @GetMapping("/block/{name}")
     fun getBlockInfo(@PathVariable(value = "name") name: String?): Mono<ResponseEntity<EthBlock.Block>> {
-        return if (name == null || name.isBlank())
+        return if (name == null || name.isNullOrBlank())
             broker.ethGetBlockByNumber(DefaultBlockParameter.valueOf("latest"), true)
                     .sendAsync().toMono().map {
                         ResponseEntity(it.result, HttpStatus.OK)

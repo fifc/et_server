@@ -78,7 +78,7 @@ internal object Ecc {
             keyAgreement.doPhase(publicKey, true)
 
             val key = keyAgreement.generateSecret("AES")
-            return keyAgreement.generateSecret("AES")
+            return key
         } catch (e: InvalidKeyException) {
             // TODO Auto-generated catch block
             e.printStackTrace()

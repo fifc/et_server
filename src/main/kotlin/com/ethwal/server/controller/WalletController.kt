@@ -52,11 +52,11 @@ class WalletController {
         LOG.info("CreateAccount: user ${request.userId} key ${request.key} sign $sign")
         var response = CreateAccountResponse()
         response.id = request.id
-        if (request.password.isBlank() || request.password.length < 6) {
+        if (request.password.isNullOrBlank() || request.password.length < 6) {
             response.status = "INVALID_PASSWORD"
             return Mono.just(response)
         }
-        if (request.userId.isBlank()) {
+        if (request.userId.isNullOrBlank()) {
             response.status = "INVALID_USERID"
             return Mono.just(response)
         }
@@ -91,7 +91,7 @@ class WalletController {
         var response = SendTransResponse()
         response.id = request.id
         val key = request.key
-        if (key == null || key.isBlank()) {
+        if (key == null || key.isNullOrBlank()) {
             response.status = "INVALID_KEY"
             return response
         }
@@ -103,17 +103,17 @@ class WalletController {
             return response
         }
 
-        if (request.password.isBlank()) {
+        if (request.password.isNullOrBlank()) {
             response.status = "INVALID_PASSWORD"
             return response
         }
 
-        if (request.account.isBlank()) {
+        if (request.account.isNullOrBlank()) {
             response.status = "INVALID_ACCOUNT"
             return response
         }
 
-        if (request.to.isBlank()) {
+        if (request.to.isNullOrBlank()) {
             response.status = "INVALID_DEST_ACCOUNT"
             return response
         }
@@ -148,7 +148,7 @@ class WalletController {
         // 参数检查，权限验证
         var response = checkTransAuth(request, sign)
         response.msg = "请调用异步接口"
-        if (!(response.status.isBlank() || response.status == "OK")) {
+        if (!(response.status.isNullOrBlank() || response.status == "OK")) {
             LOG.info(response)
             return Mono.just(response)
         }
@@ -240,7 +240,7 @@ class WalletController {
         LOG.info("trans_async: id ${request.id} from ${request.account} to ${request.to} value ${request.value}")
         // 参数检查，权限验证
         var response = checkTransAuth(request, sign)
-        if (!(response.status.isBlank() || response.status == "OK")) {
+        if (!(response.status.isNullOrBlank() || response.status == "OK")) {
             LOG.info(response)
             return Mono.just(response)
         }
@@ -354,14 +354,14 @@ class WalletController {
     @GetMapping("/balance/{account}")
     fun getBalance(@PathVariable(value = "account") account: String): Mono<ResponseEntity<GetBalanceResponse>> {
         var response = GetBalanceResponse()
-        if (account.isBlank()) {
+        if (account.isNullOrBlank()) {
             response.status = "INVALID_ACCOUNT"
             return Mono.just(ResponseEntity(response, HttpStatus.BAD_REQUEST))
         }
         response.account = account
         return EtherBroker.getBalance(account).map {
-            response.balance = if (it.isBlank()) "" else  Convert.fromWei(it.toBigDecimal(), Convert.Unit.ETHER).toString()
-            response.status = if (it.isBlank()) "FAIL" else "OK"
+            response.balance = if (it.isNullOrBlank()) "" else  Convert.fromWei(it.toBigDecimal(), Convert.Unit.ETHER).toString()
+            response.status = if (it.isNullOrBlank()) "FAIL" else "OK"
             ResponseEntity(response, HttpStatus.OK)
         }
     }
@@ -369,7 +369,7 @@ class WalletController {
     // 查询账户余额 （via EtherScan API)
     @GetMapping("/es_balance/{account}")
     fun getEsBalance(@PathVariable(value = "account") account: String): Mono<ResponseEntity<GetBalanceResponse>> {
-        if (account.isBlank()) {
+        if (account.isNullOrBlank()) {
             var response = GetBalanceResponse()
             response.status = "INVALID_ACCOUNT"
             return Mono.just(ResponseEntity(response, HttpStatus.BAD_REQUEST))
@@ -475,7 +475,7 @@ class WalletController {
     // 返回区块信息
     @GetMapping("/block/{name}")
     fun getBlockInfo(@PathVariable(value = "name") name: String?): Mono<ResponseEntity<EthBlock.Block>> {
-        return if (name == null || name.isBlank())
+        return if (name == null || name.isNullOrBlank())
             EtherBroker.broker.ethGetBlockByNumber(DefaultBlockParameter.valueOf("latest"), true)
                     .sendAsync().toMono().map {
                         ResponseEntity(it.result, HttpStatus.OK)

@@ -73,7 +73,7 @@ class AdminController {
 
     @GetMapping("/doc/{name}", produces = ["application/octet-stream"])
     fun streamToZip(@PathVariable("name") name: String?): Mono<ResponseEntity<FileSystemResource>> {
-        if (name == null || name.isBlank()) {
+        if (name.isNullOrBlank()) {
             return Mono.just(ResponseEntity(HttpStatus.NOT_FOUND))
         }
 

@@ -105,11 +105,11 @@ class Account  {
                     //INFO [04-10|14:14:34] Maximum peer count                       ETH=25 LES=0 total=25
                     //Address: {becac26346d9711e39bddc87acc699997ddc7ff8}
                     val output = "./geth account import $keyFile --keystore ${Config.keystoreDir} --password $pwFile".runCommand(File("."))
-                    if (output == null || output.isBlank()) {
+                    if (output.isNullOrBlank()) {
                         throw Exception("system error")
                     }
                     val regex = """.*Address:.*\{([a-zA-Z0-9]+)\}""".toRegex()
-                    val result = regex.find(output)
+                    val result = regex.find(output!!)
                     if (result != null) {
                         address = result.value
                     }
