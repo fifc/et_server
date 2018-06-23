@@ -78,7 +78,7 @@ defaultTasks 'run'
 mainClassName = 'com.ethwal.server.ServerApplicationKt'
 
 task wrapper(type: Wrapper) {
-	gradleVersion = "4.8"
+	gradleVersion = "4.8.1"
 	distributionType = Wrapper.DistributionType.ALL
 }
 
