@@ -96,7 +96,7 @@ class InfuraController {
 
         // 检查转账权限
         val auth = Config.authMap[key]
-        if (auth == null || !Config.canDoTrans(key!!)) {
+        if (auth == null || !Config.canDoTrans(key)) {
             response.status = "AUTH_FAIL"
             return response
         }
