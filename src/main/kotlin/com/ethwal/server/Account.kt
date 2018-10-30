@@ -109,7 +109,7 @@ class Account  {
                         throw Exception("system error")
                     }
                     val regex = """.*Address:.*\{([a-zA-Z0-9]+)\}""".toRegex()
-                    val result = regex.find(output!!)
+                    val result = regex.find(output)
                     if (result != null) {
                         address = result.value
                     }
