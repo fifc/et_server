@@ -39,7 +39,7 @@ kotlin {
 compileKotlin {
 	kotlinOptions {
 		freeCompilerArgs = ["-Xjsr305=strict"]
-		jvmTarget = "1.8"
+		jvmTarget = "9"
 	}
 }
 compileTestKotlin {
@@ -84,7 +84,7 @@ defaultTasks 'run'
 mainClassName = 'com.ethwal.server.ServerApplicationKt'
 
 wrapper {
-    gradleVersion = '5.5-rc-3'
+    gradleVersion = '5.5'
     distributionType = Wrapper.DistributionType.ALL
 }
 
