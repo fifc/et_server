@@ -8,7 +8,7 @@ import org.web3j.protocol.infura.InfuraHttpService
 import org.web3j.protocol.ipc.UnixIpcService
 import org.web3j.protocol.ipc.WindowsIpcService
 import reactor.core.publisher.Mono
-import reactor.core.publisher.toMono
+import reactor.kotlin.core.publisher.toMono
 
 
 object EtherBroker {

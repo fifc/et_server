@@ -406,7 +406,7 @@ class WalletController {
         // 缓存过期，从cainmarketcap.com拉取行情
         var webClient = WebClient.create()
         return webClient.get().uri("https://api.coinmarketcap.com/v1/ticker/ethereum/?convert=CNY")
-                .accept(MediaType.APPLICATION_JSON_UTF8)
+                .accept(MediaType.APPLICATION_JSON)
                 .exchange()
                 .flatMap {
                     it.bodyToMono(Array<CoinMarketPrice>::class.java)
