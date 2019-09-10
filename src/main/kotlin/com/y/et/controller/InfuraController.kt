@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
+import reactor.kotlin.core.publisher.toMono
 
 import javax.validation.Valid
 import org.springframework.web.bind.annotation.GetMapping
@@ -25,7 +26,6 @@ import org.web3j.protocol.core.methods.response.TransactionReceipt
 import org.web3j.protocol.infura.InfuraHttpService
 import org.web3j.tx.Transfer
 import org.web3j.utils.Convert
-import reactor.core.publisher.toMono
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.nio.charset.StandardCharsets
@@ -351,7 +351,7 @@ class InfuraController {
     fun getBlockInfo(@PathVariable(value = "name") name: String?): Mono<ResponseEntity<EthBlock.Block>> {
         return if (name == null || name.isNullOrBlank())
             broker.ethGetBlockByNumber(DefaultBlockParameter.valueOf("latest"), true)
-                    .sendAsync().toMono().map {
+                        .sendAsync().toMono().map {
                         ResponseEntity(it.result, HttpStatus.OK)
                     }
         else if (name.startsWith("0x", true))
@@ -360,7 +360,7 @@ class InfuraController {
             }
         else
             broker.ethGetBlockByNumber(DefaultBlockParameter.valueOf(BigInteger(name)), true)
-                    .sendAsync().toMono().map {
+                        .sendAsync().toMono().map {
                         ResponseEntity(it.result, HttpStatus.OK)
                     }
     }
