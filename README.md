@@ -1,1 +1,1 @@
-# et_server
+# blockchain exchange server
