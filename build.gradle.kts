@@ -11,11 +11,11 @@ group = "com.y"
 version = "0.2.7-SNAPSHOT"
 java.sourceCompatibility = JavaVersion.VERSION_12
 
-configurations {
-	implementation {
-		exclude(group = "org.springframework.boot", module = "spring-boot-starter-tomcat")
-	}
-}
+//configurations {
+//	implementation {
+//		exclude(group = "org.springframework.boot", module = "spring-boot-starter-tomcat")
+//	}
+//}
 
 repositories {
 	mavenCentral()
