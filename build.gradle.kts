@@ -63,9 +63,9 @@ tasks.withType<KotlinCompile> {
 //defaultTasks "run"
 //mainClassName = "com.y.et.EtApplicationKt"
 
-// gradle wrapper --gradle-version 5.6.2 --distribution-type all
+// gradle wrapper --gradle-version 5.6.3 --distribution-type all
 
 tasks.wrapper {
-    gradleVersion = "5.6.2"
+    gradleVersion = "5.6.3"
     distributionType = Wrapper.DistributionType.ALL
 }
