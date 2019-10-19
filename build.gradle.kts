@@ -30,7 +30,7 @@ dependencies {
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("org.jetbrains.kotlin:kotlin-stdlib")
 
-	implementation("io.projectreactor.kotlin:reactor-kotlin-extensions:1.0.0.M1")
+	implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
 	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("org.web3j:core:+")
@@ -66,6 +66,6 @@ tasks.withType<KotlinCompile> {
 // gradle wrapper --gradle-version 5.6.3 --distribution-type all
 
 tasks.wrapper {
-    gradleVersion = "5.6.3"
+    gradleVersion = "6.0-rc-1"
     distributionType = Wrapper.DistributionType.ALL
 }
