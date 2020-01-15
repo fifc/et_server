@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.*
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toMono
 
-import javax.validation.Valid
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.reactive.function.client.WebClient
 import org.web3j.protocol.core.DefaultBlockParameter
@@ -37,7 +36,7 @@ class WalletController {
 
     // 创建/绑定以太坊账户
     @PostMapping("/create_account")
-    fun createAccount(@Valid @RequestBody request: CreateAccount, @RequestParam("sign") sign: String?) : Mono<CreateAccountResponse> {
+    fun createAccount(@RequestBody request: CreateAccount, @RequestParam("sign") sign: String?) : Mono<CreateAccountResponse> {
         LOG.info("CreateAccount: user ${request.userId} key ${request.key} sign $sign")
         var response = CreateAccountResponse()
         response.id = request.id
@@ -126,7 +125,7 @@ class WalletController {
 
     // 以太币转账
     @PostMapping("/send_trans")
-    fun sendTrans(@Valid @RequestBody request: SendTrans,
+    fun sendTrans(@RequestBody request: SendTrans,
                   @RequestParam("sign") sign: String?) : Mono<SendTransResponse> {
         LOG.info("send_trans: id ${request.id} from ${request.account} to ${request.to} value ${request.value}")
         // 参数检查，权限验证
@@ -219,7 +218,7 @@ class WalletController {
 
     // 以太币转账 - 不等待结果，由调用端通过批处理查询结果
     @PostMapping("/trans_async")
-    fun transAsync(@Valid @RequestBody request: SendTrans,
+    fun transAsync(@RequestBody request: SendTrans,
                   @RequestParam("sign") sign: String?) : Mono<SendTransResponse> {
         LOG.info("trans_async: id ${request.id} from ${request.account} to ${request.to} value ${request.value}")
         // 参数检查，权限验证

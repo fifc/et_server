@@ -1,6 +1,6 @@
 package com.y.et.controller
 
-import  com.y.et.api.*
+import com.y.et.api.*
 import com.y.et.Account
 import com.y.et.Config
 import com.y.et.model.Wallet
@@ -15,7 +15,7 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toMono
 
-import javax.validation.Valid
+//import javax.validation.Valid
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.reactive.function.client.WebClient
 import org.web3j.protocol.Web3j
@@ -42,7 +42,7 @@ class InfuraController {
 
     // 创建/绑定以太坊账户
     @PostMapping("/create_account")
-    fun createAccount(@Valid @RequestBody request: CreateAccount, @RequestParam("sign") sign: String?) : Mono<CreateAccountResponse> {
+    fun createAccount(@RequestBody request: CreateAccount, @RequestParam("sign") sign: String?) : Mono<CreateAccountResponse> {
         LOG.info(request)
         var response = CreateAccountResponse()
         response.id = request.id
@@ -122,7 +122,7 @@ class InfuraController {
 
     // 以太币转账
     @PostMapping("/send_trans")
-    fun sendTrans(@Valid @RequestBody request: SendTrans,
+    fun sendTrans(@RequestBody request: SendTrans,
                   @RequestParam("sign") sign: String?) : Mono<SendTransResponse> {
         LOG.info(request)
         // 参数检查，权限验证
