@@ -66,6 +66,6 @@ tasks.withType<KotlinCompile> {
 // gradle wrapper --gradle-version 5.6.3 --distribution-type all
 
 tasks.wrapper {
-    gradleVersion = "6.1-rc-3"
+    gradleVersion = "6.1"
     distributionType = Wrapper.DistributionType.ALL
 }
