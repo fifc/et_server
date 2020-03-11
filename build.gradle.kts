@@ -9,7 +9,7 @@ plugins {
 
 group = "com.y"
 version = "0.2.7-SNAPSHOT"
-java.sourceCompatibility = JavaVersion.VERSION_12
+java.sourceCompatibility = JavaVersion.VERSION_13
 
 //configurations {
 //	implementation {
@@ -56,7 +56,7 @@ tasks.withType<Test> {
 tasks.withType<KotlinCompile> {
 	kotlinOptions {
 		freeCompilerArgs = listOf("-Xjsr305=strict")
-		jvmTarget = "12"
+		jvmTarget = "13"
 	}
 }
 
