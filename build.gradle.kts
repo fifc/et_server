@@ -9,7 +9,7 @@ plugins {
 
 group = "com.y"
 version = "0.2.7-SNAPSHOT"
-java.sourceCompatibility = JavaVersion.VERSION_13
+java.sourceCompatibility = JavaVersion.VERSION_14
 
 //configurations {
 //	implementation {
