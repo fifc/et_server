@@ -1,10 +1,22 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
+buildscript {
+    extra.apply {
+        set("kotlinVersion", "1.3.70")
+    }
+
+    repositories {
+        mavenCentral()
+	maven { url = uri("https://repo.spring.io/milestone") }
+	maven { url = uri("https://repo.spring.io/snapshot") }
+    }
+}
+
 plugins {
 	id("org.springframework.boot") version "2.3.0.BUILD-SNAPSHOT"
 	id("io.spring.dependency-management") version "1.0.9.RELEASE"
-	kotlin("jvm") version "1.3.70"
-	kotlin("plugin.spring") version "1.3.70"
+	kotlin("jvm") version "${property("kotlinVersion")}"
+	kotlin("plugin.spring") version "${property("kotlinVersion")}"
 }
 
 group = "com.y"
