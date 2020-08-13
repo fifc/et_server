@@ -19,7 +19,7 @@ buildscript {
 
 plugins {
 	id("org.springframework.boot") version "2.4.0-SNAPSHOT"
-	id("io.spring.dependency-management") version "1.0.9.RELEASE"
+	id("io.spring.dependency-management") version "1.0.10.RELEASE"
 	kotlin("jvm") version "${property("kotlinVersion")}"
 	kotlin("plugin.spring") version "${property("kotlinVersion")}"
 }
