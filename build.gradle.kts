@@ -1,11 +1,11 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-val gradle_version = "6.6"
+val gradle_version = "6.6.1"
 
 buildscript {
     extra.apply {
         //set("kotlinVersion", "1.3.72")
-        set("kotlinVersion", "1.4.0-rc")
+        set("kotlinVersion", "1.4.0")
     }
 
     repositories {
