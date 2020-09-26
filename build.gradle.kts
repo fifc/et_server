@@ -1,6 +1,6 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-val gradle_version = "6.7-rc-1"
+val gradle_version = "6.7-rc-2"
 
 buildscript {
     extra.apply {
@@ -26,7 +26,7 @@ plugins {
 
 group = "com.y"
 version = "0.2.7-SNAPSHOT"
-java.sourceCompatibility = JavaVersion.VERSION_14
+java.sourceCompatibility = JavaVersion.VERSION_15
 
 //configurations {
 //	implementation {
@@ -75,7 +75,7 @@ tasks.withType<Test> {
 tasks.withType<KotlinCompile> {
 	kotlinOptions {
 		freeCompilerArgs = listOf("-Xjsr305=strict")
-		jvmTarget = "13"
+		jvmTarget = "14"
 	}
 }
 
