@@ -1,11 +1,11 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-//val gradle_version = "6.8-milestone-1"
+//val gradle_version = "6.8-milestone-2"
 val gradle_version = "6.7"
 
 buildscript {
     extra.apply {
-        set("kotlinVersion", "1.4.20-M1")
+        set("kotlinVersion", "1.4.20-RC")
     }
 
     repositories {
@@ -74,8 +74,8 @@ tasks.withType<Test> {
 
 tasks.withType<KotlinCompile> {
 	kotlinOptions {
+		jvmTarget = "15"
 		freeCompilerArgs = listOf("-Xjsr305=strict")
-		jvmTarget = "14"
 	}
 }
 
