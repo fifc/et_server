@@ -1,7 +1,6 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-//val gradle_version = "6.8-milestone-3"
-val gradle_version = "6.8"
+val gradle_version = "6.8.1"
 
 buildscript {
     extra.apply {
@@ -18,8 +17,8 @@ buildscript {
 }
 
 plugins {
-	id("org.springframework.boot") version "2.4.0-SNAPSHOT"
-	id("io.spring.dependency-management") version "1.0.10.RELEASE"
+	id("org.springframework.boot") version "2.5.0-SNAPSHOT"
+	id("io.spring.dependency-management") version "1.0.11.RELEASE"
 	kotlin("jvm") version "${property("kotlinVersion")}"
 	kotlin("plugin.spring") version "${property("kotlinVersion")}"
 }
