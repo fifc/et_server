@@ -1,10 +1,8 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-val gradle_version = "7.0"
-
 buildscript {
     extra.apply {
-        set("kotlinVersion", "1.5.0-M2")
+        set("kotlinVersion", "1.5.0")
     }
 
     repositories {
@@ -73,7 +71,7 @@ tasks.withType<Test> {
 
 tasks.withType<KotlinCompile> {
 	kotlinOptions {
-		jvmTarget = "15"
+		jvmTarget = "16"
 		freeCompilerArgs = listOf("-Xjsr305=strict")
 	}
 }
@@ -84,6 +82,6 @@ tasks.withType<KotlinCompile> {
 // gradle wrapper --gradle-version 5.6.3 --distribution-type all
 
 tasks.wrapper {
-    gradleVersion = gradle_version
+    gradleVersion = "7.0.2"
     distributionType = Wrapper.DistributionType.ALL
 }
