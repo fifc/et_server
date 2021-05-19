@@ -361,25 +361,24 @@ class WalletController {
         val uriBase = Config.uriBase
         var webClient = WebClient.create()
         return webClient.get().uri("$uriBase&address=$account&tag=latest&apikey=${Config.etherscanKey}")
-                .accept(MediaType.APPLICATION_JSON)
-                .exchange()
-                .flatMap {
-                    it.bodyToMono(AccountBalance::class.java)
-                            .map {
-                                var response = GetBalanceResponse()
-                                response.account = account
-                                if (it.status == "1") {
-                                    response.status = "OK"
-                                    response.balance = Convert.fromWei(it.result.toBigDecimal(), Convert.Unit.ETHER).toString()
-                                    ResponseEntity(response, HttpStatus.OK)
-                                } else {
-                                    response.status = "FAIL"
-                                    response.msg = "3rd party returned: ${it.message}"
-                                    ResponseEntity(response, HttpStatus.INTERNAL_SERVER_ERROR)
-                                }
-                            }
-                }
-                .defaultIfEmpty(ResponseEntity(GetBalanceResponse(), HttpStatus.NOT_FOUND))
+            .accept(MediaType.APPLICATION_JSON)
+            .exchangeToMono {
+                it.bodyToMono(AccountBalance::class.java)
+                    .map {
+                        var response = GetBalanceResponse()
+                        response.account = account
+                        if (it.status == "1") {
+                            response.status = "OK"
+                            response.balance = Convert.fromWei(it.result.toBigDecimal(), Convert.Unit.ETHER).toString()
+                            ResponseEntity(response, HttpStatus.OK)
+                        } else {
+                            response.status = "FAIL"
+                            response.msg = "3rd party returned: ${it.message}"
+                            ResponseEntity(response, HttpStatus.INTERNAL_SERVER_ERROR)
+                        }
+                    }
+            }
+            .defaultIfEmpty(ResponseEntity(GetBalanceResponse(), HttpStatus.NOT_FOUND))
     }
 
     // 查询行情
@@ -405,33 +404,32 @@ class WalletController {
         // 缓存过期，从cainmarketcap.com拉取行情
         var webClient = WebClient.create()
         return webClient.get().uri("https://api.coinmarketcap.com/v1/ticker/ethereum/?convert=CNY")
-                .accept(MediaType.APPLICATION_JSON)
-                .exchange()
-                .flatMap {
-                    it.bodyToMono(Array<CoinMarketPrice>::class.java)
-                            .map {
-                                var response = GetMarketPriceResponse()
-                                if (it.isEmpty()) {
-                                    response.status = "FAIL"
-                                    ResponseEntity(response, HttpStatus.NOT_FOUND)
-                                } else {
-                                    var price = it[0]
-                                    latest.time = timestamp
-                                    latest.btc = price.price_btc?:""
-                                    latest.usd = price.price_usd?:""
-                                    response.usd = latest.usd
-                                    response.btc = latest.btc
-                                    response.time = latest.time
-                                    var gasPrice = EtherBroker.broker.ethGasPrice().send()
-                                    response.gasPrice = if (gasPrice.hasError()) "1000000000" else gasPrice.gasPrice.toString()
-                                    if (!response.gasPrice.isNullOrBlank())
-                                        latest.gasPrice = response.gasPrice
-                                    response.status = "OK"
-                                    ResponseEntity(response, HttpStatus.OK)
-                                }
-                            }
-                }
-                .defaultIfEmpty(ResponseEntity(GetMarketPriceResponse(), HttpStatus.NOT_FOUND))
+            .accept(MediaType.APPLICATION_JSON)
+            .exchangeToMono {
+                it.bodyToMono(Array<CoinMarketPrice>::class.java)
+                    .map {
+                        var response = GetMarketPriceResponse()
+                        if (it.isEmpty()) {
+                            response.status = "FAIL"
+                            ResponseEntity(response, HttpStatus.NOT_FOUND)
+                        } else {
+                            var price = it[0]
+                            latest.time = timestamp
+                            latest.btc = price.price_btc?:""
+                            latest.usd = price.price_usd?:""
+                            response.usd = latest.usd
+                            response.btc = latest.btc
+                            response.time = latest.time
+                            var gasPrice = EtherBroker.broker.ethGasPrice().send()
+                            response.gasPrice = if (gasPrice.hasError()) "1000000000" else gasPrice.gasPrice.toString()
+                            if (!response.gasPrice.isNullOrBlank())
+                                latest.gasPrice = response.gasPrice
+                            response.status = "OK"
+                            ResponseEntity(response, HttpStatus.OK)
+                        }
+                    }
+            }
+            .defaultIfEmpty(ResponseEntity(GetMarketPriceResponse(), HttpStatus.NOT_FOUND))
     }
 
     // 返回区块链同步状态
