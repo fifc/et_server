@@ -363,6 +363,9 @@ class WalletController {
         return webClient.get().uri("$uriBase&address=$account&tag=latest&apikey=${Config.etherscanKey}")
             .accept(MediaType.APPLICATION_JSON)
             .exchangeToMono {
+                if (it.statusCode() != HttpStatus.OK) {
+                    return@exchangeToMono Mono.just(ResponseEntity(GetBalanceResponse(), it.statusCode()))
+                }
                 it.bodyToMono(AccountBalance::class.java)
                     .map {
                         var response = GetBalanceResponse()
