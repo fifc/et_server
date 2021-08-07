@@ -23,7 +23,7 @@ plugins {
 
 group = "com.y"
 version = "0.2.7-SNAPSHOT"
-java.sourceCompatibility = JavaVersion.VERSION_16
+java.sourceCompatibility = JavaVersion.VERSION_17
 
 //configurations {
 //	implementation {
@@ -82,6 +82,6 @@ tasks.withType<KotlinCompile> {
 // gradle wrapper --gradle-version 5.6.3 --distribution-type all
 
 tasks.wrapper {
-    gradleVersion = "7.2-rc-1"
+    gradleVersion = "7.2-rc-2"
     distributionType = Wrapper.DistributionType.ALL
 }
