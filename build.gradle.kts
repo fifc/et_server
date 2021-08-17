@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 buildscript {
     extra.apply {
-        set("kotlinVersion", "1.5.30-M1")
+        set("kotlinVersion", "1.5.30-RC")
     }
 
     repositories {
@@ -82,6 +82,6 @@ tasks.withType<KotlinCompile> {
 // gradle wrapper --gradle-version 5.6.3 --distribution-type all
 
 tasks.wrapper {
-    gradleVersion = "7.2-rc-2"
+    gradleVersion = "7.2-rc-3"
     distributionType = Wrapper.DistributionType.ALL
 }
